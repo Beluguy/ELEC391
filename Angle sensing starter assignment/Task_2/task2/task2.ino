@@ -1,19 +1,3 @@
-/*
-  Arduino BMI270 - Simple Accelerometer
-
-  This example reads the acceleration values from the BMI270
-  sensor and continuously prints them to the Serial Monitor
-  or Serial Plotter.
-
-  The circuit:
-  - Arduino Nano 33 BLE Sense Rev2
-
-  created 10 Jul 2019
-  by Riccardo Rizzo
-
-  This example code is in the public domain.
-*/
-
 #include "Arduino_BMI270_BMM150.h"
 
 void setup() {
@@ -25,25 +9,23 @@ void setup() {
     Serial.println("Failed to initialize IMU!");
     while (1);
   }
-
-  Serial.print("Accelerometer sample rate = ");
-  Serial.print(IMU.accelerationSampleRate());
-  Serial.println(" Hz");
-  Serial.println();
-  Serial.println("Acceleration in G's");
-  Serial.println("X\tY\tZ");
 }
 
 void loop() {
-  float x, y, z;
+  float x, y, z, angle;
 
   if (IMU.accelerationAvailable()) {
     IMU.readAcceleration(x, y, z);
-
-    Serial.print(x);
-    Serial.print('\t');
-    Serial.print(y);
-    Serial.print('\t');
-    Serial.println(z);
+    angle = RAD_TO_DEG*atan(y/z);
+    //Serial.print(y);
+    //Serial.print('\t');
+    //Serial.print(z);
+    //Serial.print('\t');
+    Serial.println(angle);
   }
+  delay(100);
 }
+
+
+
+
