@@ -32,7 +32,7 @@ try:
                 ax.plot(x_vals, y_vals)
                 ax.set_xlabel('Data point')
                 ax.set_ylabel('Angle in degrees')
-                ax.set_title('Real-Time Angle computed via only accelerometer')
+                ax.set_title('Real-Time Angle computed via a complementary filter')
                 ax.legend()
                 plt.draw()
                 plt.pause(0.00000000001)  # Pause to allow for the plot to update

@@ -21,7 +21,7 @@ try:
             data = arduino.readline().decode('utf-8').strip()  # Read and decode data
             try:
                 sensor_value = float(data)  # Convert the data to an integer
-                print(f"Angle in degress: {sensor_value}")
+                print(f"Angle in degrees: {sensor_value}")
                 
                 # Update the x and y lists
                 x_vals.append(len(x_vals))  # Append the time or number of reading
