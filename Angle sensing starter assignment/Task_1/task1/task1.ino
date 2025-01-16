@@ -10,7 +10,6 @@ void setup() {
 }
 
 void loop() {
-  delay (100);
   float x, y, z;
 
   if (IMU.gyroscopeAvailable()) {

@@ -1,6 +1,7 @@
 #include "Arduino_BMI270_BMM150.h"
 
-int SampleRate;
+float SampleRate;
+float angle = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -10,18 +11,16 @@ void setup() {
     while (1);
   }
   SampleRate = IMU.gyroscopeSampleRate();
-
+  Serial.println(angle);
 }
 
 void loop() {
-  delay (100);
-  float x, y, z, angle;
+  float x, y, z;
 
   if (IMU.gyroscopeAvailable()) {
     IMU.readGyroscope(x, y, z);
-    //Serial.print(x);
-    //Serial.print('\t');
-    angle = SampleRate*x + 0;
+
+    angle += (1.00/SampleRate)*x;
     Serial.println(angle);
   }
 }

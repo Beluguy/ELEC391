@@ -5,7 +5,7 @@ import serial
 import time
 import matplotlib.pyplot as plt
 
-arduino = serial.Serial('COM6', 9600, timeout=0.1)  
+arduino = serial.Serial('COM7', 9600, timeout=0.1)  
 
 # Set up for plotting
 plt.ion()  # Enable interactive mode for live plotting

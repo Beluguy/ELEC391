@@ -23,7 +23,6 @@ void loop() {
     //Serial.print('\t');
     Serial.println(angle);
   }
-  delay(100);
 }
 
 
