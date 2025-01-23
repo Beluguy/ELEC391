@@ -28,7 +28,7 @@ ax.set_xlabel('Data point')
 ax.set_ylabel('Angle in degrees')
 
 ax.set_title('Real-Time Angle computed via a complementary filter')
-ax.legend()
+#ax.legend()
 
 def init():
     line.set_data([],[])
