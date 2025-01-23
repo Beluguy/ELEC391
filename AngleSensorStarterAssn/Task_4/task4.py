@@ -50,7 +50,7 @@ def update(frame):
         x_vals.append(x_vals[-1] + 1)  # Increment x based on time steps
     
     y_vals.append(sensor_value)
-
+    
     # Update the plot line
     line.set_data(x_vals, y_vals)
 
