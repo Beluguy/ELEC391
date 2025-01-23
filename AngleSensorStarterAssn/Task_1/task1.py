@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from collections import deque
 
-arduino = serial.Serial('COM3', 9600, timeout=0.1)  
+arduino = serial.Serial('COM6', 9600, timeout=0.1)  
 
 # Set up for plotting
 #plt.ion()  # Enable interactive mode for live plotting
@@ -60,7 +60,7 @@ def update(frame):
     
 
 # Create animation
-ani = FuncAnimation(fig, update, init_func=init, blit=True, interval=5)
+ani = FuncAnimation(fig, update, init_func=init, blit=True, interval=1)
 
 # Show plot
 plt.show()

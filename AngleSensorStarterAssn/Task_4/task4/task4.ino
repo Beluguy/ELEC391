@@ -17,7 +17,6 @@ void setup() {
 
 void loop() {
 
-
   kAcc = 0.05;
   kGyro = 1.0 - kAcc;
 
