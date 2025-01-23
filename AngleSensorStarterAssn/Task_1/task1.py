@@ -27,7 +27,7 @@ ax.set_ylim(-100, 100)
 ax.set_xlabel('Data point')
 ax.set_ylabel('Angle in degrees')
 
-ax.set_title('Real-Time Angle computed via a complementary filter')
+ax.set_title('Real Data from arduino via a serial port')
 #ax.legend()
 
 def init():
