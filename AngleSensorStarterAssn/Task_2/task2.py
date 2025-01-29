@@ -8,8 +8,13 @@ import time
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from collections import deque
+import numpy as np
 
+<<<<<<< HEAD
 arduino = serial.Serial('COM7', 9600, timeout=0.1)  
+=======
+arduino = serial.Serial('COM6', 9600, timeout=0.1)  
+>>>>>>> 74ced8940eb6c16022fdf56e9ae6068dcd92cb9b
 
 # Set up for plotting
 #plt.ion()  # Enable interactive mode for live plotting
@@ -23,6 +28,9 @@ line, = ax.plot([], [], lw=2)
 
 ax.set_xlim(0, max_points)
 ax.set_ylim(-100, 100)
+
+plt.xticks(np.arange(0, max_points, 10))
+plt.yticks(np.arange(-100,100,10))
 
 ax.set_xlabel('Data point')
 ax.set_ylabel('Angle in degrees')
@@ -61,7 +69,11 @@ def update(frame):
     
 
 # Create animation
+<<<<<<< HEAD
 ani = FuncAnimation(fig, update, init_func=init, blit=True, interval=200)
+=======
+ani = FuncAnimation(fig, update, init_func=init, blit=True, interval=1)
+>>>>>>> 74ced8940eb6c16022fdf56e9ae6068dcd92cb9b
 
 # Show plot
 plt.show()
