@@ -1,7 +1,7 @@
-  #define PWM_1 A7
-  #define PWM_2 A6
-  #define PWM_3 A5
-  #define PWM_4 A4
+  #define PWM_1 D10
+  #define PWM_2 D9
+  #define PWM_3 D8
+  #define PWM_4 D7
 
 
 void setup() {
