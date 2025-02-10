@@ -9,19 +9,19 @@ void setup() {
 
 
 
-  pinMode(PWM_1, OUTPUT);
-  pinMode(PWM_2, OUTPUT);
-  pinMode(PWM_3, OUTPUT);
-  pinMode(PWM_4, OUTPUT);
+  pinMode(M1F, OUTPUT);
+  pinMode(M1B, OUTPUT);
+  pinMode(M2F, OUTPUT);
+  pinMode(M2B, OUTPUT);
 
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
 
-  analogWrite(PWM_1, 0);
-  analogWrite(PWM_2, 77);
-  analogWrite(PWM_3, 127);
-  analogWrite(PWM_4, 255);
+  analogWrite(M1F, 0);
+  analogWrite(M1B, 77);
+  analogWrite(M2F, 127);
+  analogWrite(M2B, 255);
 
 }
