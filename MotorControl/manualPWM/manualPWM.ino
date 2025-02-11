@@ -22,12 +22,12 @@ void setup() {
 
 void loop() {
   //Motor 1
-  analogWrite(M1F, 255);
+  analogWrite(M1F, 125);
   analogWrite(M1B, 0); 
 
   
   // //Motor 2
-  analogWrite(M2F, 255);
+  analogWrite(M2F, 125);
   analogWrite(M2B, 0);
 
 }

@@ -1,9 +1,12 @@
 #include "Arduino_BMI270_BMM150.h"
+#include "mbed.h"
 
-#define PWM_1 D10
-#define PWM_2 D9
-#define PWM_3 D8
-#define PWM_4 D7
+//MOTOR 1
+#define M1F D7 //BIN1 - GREEN
+#define M1B D8 //BIN2 - BLUE
+//MOTOR 2
+#define M2F D10 //AIN1 - BLUE
+#define M2B D9 //AIN2 - GREEN
 
 float SampleRate;
 float currentAngle = 0;
@@ -20,10 +23,10 @@ void setup() {
   }
   SampleRate = IMU.gyroscopeSampleRate();
 
-  pinMode(PWM_1, OUTPUT);
-  pinMode(PWM_2, OUTPUT);
-  pinMode(PWM_3, OUTPUT);
-  pinMode(PWM_4, OUTPUT);
+  pinMode(M1F, OUTPUT);
+  pinMode(M1B, OUTPUT);
+  pinMode(M2F, OUTPUT);
+  pinMode(M2B, OUTPUT);
 }
 
 void loop() {
@@ -47,13 +50,31 @@ void loop() {
 
   errorAngle = targetAngle - currentAngle;
 
-  if(errorAngle=0){
-    //don't turn
-  } elseif(errorAngle < 0) {
-    // turn in one dir
-    //(255*abs(errorAngle)/90)
+  if(errorAngle < -2) {
+
+    analogWrite(M1F, 255);
+    analogWrite(M1B, 255-round(255*abs(errorAngle)/90));
+
+    analogWrite(M2F, 255);
+    analogWrite(M2B, 255-round(255*abs(errorAngle)/90));
+
+  } else if(errorAngle > 2) {
+
+    analogWrite(M1F, 255-round(255*abs(errorAngle)/90));
+    analogWrite(M1B, 255);
+
+    analogWrite(M2F, 255-round(255*abs(errorAngle)/90));
+    analogWrite(M2B, 255);
+
+
   } else {
-    //go other dir
+    analogWrite(M1F, 0);
+    analogWrite(M1B, 0);
+
+    analogWrite(M2F, 0);
+    analogWrite(M2B, 0);
+    
   }
 
+  //delay(100);
 }
