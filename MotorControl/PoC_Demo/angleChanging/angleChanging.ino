@@ -45,6 +45,7 @@ void loop() {
     gyroAngle = (1.00/SampleRate)*gyroX;
 
     currentAngle = kGyro*(gyroAngle + currentAngle) + kAcc*(accAngle);
+    Serial.print("Current Angle: ");
     Serial.println(currentAngle);
   }
 
@@ -66,15 +67,11 @@ void loop() {
     analogWrite(M2F, 255-round(255*abs(errorAngle)/90));
     analogWrite(M2B, 255);
 
-
   } else {
     analogWrite(M1F, 0);
     analogWrite(M1B, 0);
 
     analogWrite(M2F, 0);
     analogWrite(M2B, 0);
-    
   }
-
-  //delay(100);
 }
