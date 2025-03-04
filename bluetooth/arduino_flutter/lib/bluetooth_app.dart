@@ -219,19 +219,19 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     ElevatedButton(
                       onPressed:
-                          _isConnected ? () => _sendCommand('FORWARD') : null,
+                          _isConnected ? () => _sendCommand('LEFT') : null,
                       child: const Icon(Icons.arrow_back),
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton(
                       onPressed:
-                          _isConnected ? () => _sendCommand('FORWARD') : null,
+                          _isConnected ? () => _sendCommand('BACK') : null,
                       child: const Icon(Icons.arrow_downward),
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton(
                       onPressed:
-                          _isConnected ? () => _sendCommand('FORWARD') : null,
+                          _isConnected ? () => _sendCommand('RIGHT') : null,
                       child: const Icon(Icons.arrow_forward),
                     ),
                   ],
@@ -247,13 +247,13 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton(
-                      onPressed: _isConnected ? () => _sendCommand('A') : null,
-                      child: const Text('Send A'),
+                      onPressed: _isConnected ? () => _sendCommand('B') : null,
+                      child: const Text('Send B'),
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton(
-                      onPressed: _isConnected ? () => _sendCommand('A') : null,
-                      child: const Text('Send A'),
+                      onPressed: _isConnected ? () => _sendCommand('C') : null,
+                      child: const Text('Send C'),
                     ),
                   ],
                 ),
