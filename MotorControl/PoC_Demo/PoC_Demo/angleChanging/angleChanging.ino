@@ -53,19 +53,20 @@ void loop() {
   if(errorAngle < -2) {
 
     analogWrite(M1F, 255);
-    analogWrite(M1B, 255-round(255*abs(errorAngle)/90));
+    analogWrite(M1B, 255-round(255*abs(errorAngle)/60));
 
     analogWrite(M2F, 255);
-    analogWrite(M2B, 255-round(255*abs(errorAngle)/90));
+    analogWrite(M2B, 255-round(255*abs(errorAngle)/60));
+    Serial.println("first case");
 
   } else if(errorAngle > 2) {
 
-    analogWrite(M1F, 255-round(255*abs(errorAngle)/90));
+    analogWrite(M1F, 255-round(255*abs(errorAngle)/60));
     analogWrite(M1B, 255);
 
-    analogWrite(M2F, 255-round(255*abs(errorAngle)/90));
+    analogWrite(M2F, 255-round(255*abs(errorAngle)/60));
     analogWrite(M2B, 255);
-
+    Serial.println("second case");
 
   } else {
     analogWrite(M1F, 0);
@@ -73,7 +74,7 @@ void loop() {
 
     analogWrite(M2F, 0);
     analogWrite(M2B, 0);
-    
+    Serial.println("last case");
   }
 
   //delay(100);
