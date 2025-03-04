@@ -11,8 +11,13 @@
 float SampleRate;
 float currentAngle = 0;
 
-float accX, accY, accZ, gyroX, gyroY, gyroZ, kAcc, kGyro, accAngle, gyroAngle, errorAngle, targetAngle;
-float Kp, Ki, Kd;
+float accX, accY, accZ, gyroX, gyroY, gyroZ, kAcc, kGyro, accAngle, gyroAngle, errorAngle, targetAngle, pError, iError, dError, prevError;
+
+int motorControlVar, motorControlVarAbs;
+
+float Kp = 5.0;
+float Ki = 2.0;
+float Kd = 0.5;
 
 void setup() {
 
@@ -47,48 +52,57 @@ void loop() {
     gyroAngle = (1.00/SampleRate)*gyroX;
 
     currentAngle = kGyro*(gyroAngle + currentAngle) + kAcc*(accAngle);
-    Serial.println(currentAngle);
+    //Serial.print(currentAngle);
+    //Serial.print("    ");
   }
 
   //PID
-
-  Kp = ;
-  Ki = ;
-  Kd = ;
 
   pError = targetAngle - currentAngle;
   iError += pError*(1.0/SampleRate); 
   dError = (pError - prevError)/(1.0/SampleRate);
 
+  Serial.print(pError);
+  Serial.print("    ");
+  Serial.print(iError);
+  Serial.print("    ");
+  Serial.print(dError);
+  Serial.print("    ");
+  
+
   prevError = pError;
 
-  motorControlVar = Kp*pError + Ki*iError + Kd*dError;
+  motorControlVar = int(Kp*pError + Ki*iError + Kd*dError);
+  motorControlVarAbs = abs(motorControlVar);
 
-  if(errorAngle < -2) {
-
+  if(motorControlVarAbs < 40){
+    motorControlVar = 0;
+  } else if(motorControlVarAbs> 255 && motorControlVar > 0){
+    motorControlVar = 255; 
+  } else if(motorControlVarAbs > 255 && motorControlVar < 0){
+    motorControlVar = -255;
+  } else if(motorControlVar < 0){
     analogWrite(M1F, 255);
-    analogWrite(M1B, 255-round(255*abs(errorAngle)/90));
+    analogWrite(M1B, 255 - motorControlVarAbs);
 
     analogWrite(M2F, 255);
-    analogWrite(M2B, 255-round(255*abs(errorAngle)/90));
-
-  } else if(errorAngle > 2) {
-
-    analogWrite(M1F, 255-round(255*abs(errorAngle)/90));
+    analogWrite(M2B, 255 - motorControlVarAbs);
+  } else if(motorControlVar > 0){
+    analogWrite(M1F, 255 - motorControlVar);
     analogWrite(M1B, 255);
 
-    analogWrite(M2F, 255-round(255*abs(errorAngle)/90));
-    analogWrite(M2B, 255);
-
-
+    analogWrite(M2F, 255 - motorControlVar);
+    analogWrite(M2B, 255);    
   } else {
     analogWrite(M1F, 0);
     analogWrite(M1B, 0);
 
     analogWrite(M2F, 0);
     analogWrite(M2B, 0);
-    
   }
+
+  Serial.print(motorControlVar);
+  Serial.print("\n");
 
   //delay(100);
 }
