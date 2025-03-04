@@ -45,6 +45,7 @@ void loop() {
     gyroAngle = (1.00/SampleRate)*gyroX;
 
     currentAngle = kGyro*(gyroAngle + currentAngle) + kAcc*(accAngle);
+    Serial.print("Current Angle: ");
     Serial.println(currentAngle);
   }
 
@@ -66,7 +67,10 @@ void loop() {
 
     analogWrite(M2F, 255-round(255*abs(errorAngle)/60));
     analogWrite(M2B, 255);
+<<<<<<< HEAD:MotorControl/PoC_Demo/PoC_Demo/angleChanging/angleChanging.ino
     Serial.println("second case");
+=======
+>>>>>>> 1326da0d2bba8603f41926bffcc499ccef94c22d:MotorControl/PoC_Demo/angleChanging/angleChanging.ino
 
   } else {
     analogWrite(M1F, 0);
@@ -74,8 +78,9 @@ void loop() {
 
     analogWrite(M2F, 0);
     analogWrite(M2B, 0);
+<<<<<<< HEAD:MotorControl/PoC_Demo/PoC_Demo/angleChanging/angleChanging.ino
     Serial.println("last case");
+=======
+>>>>>>> 1326da0d2bba8603f41926bffcc499ccef94c22d:MotorControl/PoC_Demo/angleChanging/angleChanging.ino
   }
-
-  //delay(100);
 }
