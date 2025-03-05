@@ -9,7 +9,7 @@
 #define M2F D10 //AIN1 - BLUE
 #define M2B D9 //AIN2 - GREEN
 
-float Kp = 50, Ki = 0.0, Kd = 0.0;
+float Kp = 10.0, Ki = 0.0, Kd = 0.0;
 double currentAngle = 0, targetAngle = 0, PWM;
 float kAcc = 0.05, kGyro = 1 - kAcc;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
@@ -54,14 +54,14 @@ void loop() {
   //----------------------PID---------------------------------
   myPID.Compute();
 
-  if (currentAngle > 0.5) {
+  if (currentAngle > 2.0) {
     int speed = abs(PWM);
     if (speed < 80) speed = 80;
     analogWrite(M1F, 255);  
     analogWrite(M1B, 255-speed);   
     analogWrite(M2F, 255);  
     analogWrite(M2B, 255-speed);
-  } else if (currentAngle < -0.5)  {
+  } else if (currentAngle < -2.0)  {
     if (PWM < 80) PWM = 80;
     analogWrite(M1F, int(255-PWM));    
     analogWrite(M1B, 255);   
