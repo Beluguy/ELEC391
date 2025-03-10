@@ -7,6 +7,8 @@ BLEService customService("00000000-5EC4-4083-81CD-A10B8D5CF6EC");
 BLECharacteristic customCharacteristic(
     "00000001-5EC4-4083-81CD-A10B8D5CF6EC", BLERead | BLEWrite | BLENotify, BUFFER_SIZE, false);
 
+float turnCoeff, driveCoeff;
+
 void setup() {
   Serial.begin(9600);
   while (!Serial);
@@ -51,6 +53,20 @@ void loop() {
     while (central.connected()) {
       // Check if the characteristic was written
       if (customCharacteristic.written()) {
+        int length = customCharacteristic.valueLength();
+        
+        if (length == 8) { // Expecting 8 bytes (2 floats)
+          uint8_t data[8];
+          customCharacteristic.readValue(data, length);
+
+          memcpy(&turnCoeff, data, 4);  // Extract first float
+          memcpy(&driveCoeff, data + 4, 4); // Extract second float
+          
+          Serial.print("Turn Value: "); Serial.print(turnCoeff);
+          Serial.print(" | Forward Drive Val: "); Serial.println(driveCoeff);
+        }
+      
+       /*
        // Get the length of the received data
         int length = customCharacteristic.valueLength();
 
@@ -69,6 +85,7 @@ void loop() {
 
         // Optionally, respond by updating the characteristic's value
         customCharacteristic.writeValue("Data received");
+        */
       }
     }
 
