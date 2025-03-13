@@ -153,7 +153,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _sendCommand(double turn, double forward, double p, double i, double d) async {
     
     if (_writeCharacteristic != null) {
-        final ByteData data = ByteData(8);
+        final ByteData data = ByteData(20);
         data.setFloat32(0, turn, Endian.little); // First 4 bytes: X-coordinate
         data.setFloat32(4, forward, Endian.little); // Next 4 bytes: Y-coordinate
         data.setFloat32(8, p, Endian.little); // Next 4 bytes: Y-coordinate
