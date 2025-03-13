@@ -1,17 +1,16 @@
 #include "Arduino_BMI270_BMM150.h"
 #include <PID_v1.h>
 
-//MOTOR 1
-#define M1F D7 //BIN1 - GREEN
-#define M1B D8 //BIN2 - BLUE
+#define M2B D10 //yellow: motor 2
+#define M1F D9  //white:  motor 1
+#define M1B D8  //green:  motor 1
+#define M2F D7  //blue:   motor 2
 
-//MOTOR 2
-#define M2F D10 //AIN1 - BLUE
-#define M2B D9 //AIN2 - GREEN
-
-float Kp = 10.0, Ki = 0.0, Kd = 0.0;
-double currentAngle = 0, targetAngle = 0, PWM;
-float kAcc = 0.05, kGyro = 1 - kAcc;
+float Ku = 4.92, Tu = 0.80; //Ku = 4.89
+float Kp = Ku, Ki = 0.3, Kd = 0.0;
+// float Kp = Ku*0.6, Ki = 1.3*Ku/Tu, Kd = 0.075*Ku*Tu;
+double currentAngle = 0.0, targetAngle = 0.0, PWM;
+float kAcc = 0.05, kGyro = 0.95;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
 
 //Specify the links and initial tuning parameters
@@ -19,7 +18,7 @@ PID myPID(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd, DIRECT);
 
 void setup() {
   Serial.begin(9600);
-  while (!Serial);
+  //while (!Serial);
   if (!IMU.begin()) {
     Serial.println("Failed to initialize IMU!");
     while (1);
@@ -47,25 +46,24 @@ void loop() {
     currentAngle = kGyro*(gyroAngle + currentAngle) + kAcc*(accAngle);
     Serial.print("Current Angle: ");
     Serial.print(currentAngle);
-    Serial.print("\tPWM: ");
+    Serial.print("\tSpeed: ");
     }
   //-----------------------------------------------------------
 
   //----------------------PID---------------------------------
   myPID.Compute();
+  int speed = abs(PWM);
+  if (speed < 50) speed = 50;
 
-  if (currentAngle > 2.0) {
-    int speed = abs(PWM);
-    if (speed < 80) speed = 80;
+  if (currentAngle > targetAngle) {
     analogWrite(M1F, 255);  
     analogWrite(M1B, 255-speed);   
     analogWrite(M2F, 255);  
     analogWrite(M2B, 255-speed);
-  } else if (currentAngle < -2.0)  {
-    if (PWM < 80) PWM = 80;
-    analogWrite(M1F, int(255-PWM));    
+  } else if (currentAngle < targetAngle)  {
+    analogWrite(M1F, 255-speed);    
     analogWrite(M1B, 255);   
-    analogWrite(M2F, int(255-PWM));   
+    analogWrite(M2F, 255-speed);   
     analogWrite(M2B, 255);
   } else {
     analogWrite(M1F, 0);    
@@ -74,5 +72,5 @@ void loop() {
     analogWrite(M2B, 0);
   }
   //----------------------------------------------------------
-  Serial.println(PWM);
+  Serial.println(speed);
 }
