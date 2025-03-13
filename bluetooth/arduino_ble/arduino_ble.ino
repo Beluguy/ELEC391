@@ -7,7 +7,7 @@ BLEService customService("00000000-5EC4-4083-81CD-A10B8D5CF6EC");
 BLECharacteristic customCharacteristic(
     "00000001-5EC4-4083-81CD-A10B8D5CF6EC", BLERead | BLEWrite | BLENotify, BUFFER_SIZE, false);
 
-float turnCoeff, driveCoeff;
+float turnCoeff, driveCoeff, p, i, d;
 
 void setup() {
   Serial.begin(9600);
@@ -55,15 +55,21 @@ void loop() {
       if (customCharacteristic.written()) {
         int length = customCharacteristic.valueLength();
         
-        if (length == 8) { // Expecting 8 bytes (2 floats)
-          uint8_t data[8];
+        if (length == 20) { // Expecting 8 bytes (5 floats)
+          uint8_t data[20];
           customCharacteristic.readValue(data, length);
 
           memcpy(&turnCoeff, data, 4);  // Extract first float
           memcpy(&driveCoeff, data + 4, 4); // Extract second float
+          memcpy(&driveCoeff, data + 8, 4); // Extract second float
+          memcpy(&driveCoeff, data + 12, 4); // Extract second float
+          memcpy(&driveCoeff, data + 16, 4); // Extract second float
           
           Serial.print("Turn Value: "); Serial.print(turnCoeff);
           Serial.print(" | Forward Drive Val: "); Serial.println(driveCoeff);
+          Serial.print("P: "); Serial.print(p);
+          Serial.print(" | I: "); Serial.print(i);
+          Serial.print(" | D: "); Serial.println(d);
         }
       
        /*

@@ -26,8 +26,16 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final _ble = FlutterReactiveBle();
 
+  final TextEditingController myController1 = TextEditingController();
+  final TextEditingController myController2 = TextEditingController();
+  final TextEditingController myController3 = TextEditingController();
+
   double _x = 0;
   double _y = 0;
+  double num1 = 0;
+  double num2 = 0;
+  double num3 = 0;
+
   JoystickMode _joystickMode = JoystickMode.all;
 
 
@@ -59,6 +67,9 @@ class _MyHomePageState extends State<MyHomePage> {
     _notifySub?.cancel();
     _connectSub?.cancel();
     _scanSub?.cancel();
+    myController1.dispose();
+    myController2.dispose();
+    myController3.dispose();
     super.dispose();
   }
 
@@ -139,12 +150,15 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  Future<void> _sendCommand(double turn, double forward) async {
+  Future<void> _sendCommand(double turn, double forward, double p, double i, double d) async {
     
     if (_writeCharacteristic != null) {
         final ByteData data = ByteData(8);
         data.setFloat32(0, turn, Endian.little); // First 4 bytes: X-coordinate
         data.setFloat32(4, forward, Endian.little); // Next 4 bytes: Y-coordinate
+        data.setFloat32(8, p, Endian.little); // Next 4 bytes: Y-coordinate
+        data.setFloat32(12, i, Endian.little); // Next 4 bytes: Y-coordinate
+        data.setFloat32(16, d, Endian.little); // Next 4 bytes: Y-coordinate
 
         final List<int> sendData = data.buffer.asUint8List();
       try {
@@ -233,7 +247,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
                     });
-                    _sendCommand(_x,_y);
+                    _sendCommand(_x,_y, num1, num2, num3);
                   },
                 ),
                 const SizedBox(height: 10),
@@ -276,15 +290,48 @@ class _MyHomePageState extends State<MyHomePage> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                
+                */
 
-                Row(
+                Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ElevatedButton(
-                      onPressed: _isConnected ? () => _sendCommand('A') : null,
-                      child: const Text('Send A'),
+
+                    TextFormField(
+
+                      controller: myController1,
+                      keyboardType: TextInputType.number,
+
                     ),
+                    SizedBox(height: 20),
+
+                    TextFormField(
+
+                      controller: myController2,
+                      keyboardType: TextInputType.number,
+
+                    ),
+                    SizedBox(height: 20),
+
+                    TextFormField(
+
+                      controller: myController3,
+                      keyboardType: TextInputType.number,
+
+                    ),
+                    SizedBox(height: 20),
+
+
+                    ElevatedButton(
+                      onPressed: (){
+                        num1 = double.tryParse(myController1.text) ?? 0;
+                        num2 = double.tryParse(myController2.text) ?? 0;
+                        num3 = double.tryParse(myController3.text) ?? 0;
+                        _sendCommand(_x,_y, num1, num2, num3);
+                      },
+                      child: const Text('Send PID'),
+                    ),
+                    
+                    /*
                     const SizedBox(width: 10),
                     ElevatedButton(
                       onPressed: _isConnected ? () => _sendCommand('B') : null,
@@ -295,9 +342,16 @@ class _MyHomePageState extends State<MyHomePage> {
                       onPressed: _isConnected ? () => _sendCommand('C') : null,
                       child: const Text('Send C'),
                     ),
+                    */
                   ],
                 ),
-                */
+                const SizedBox(height: 10),
+                Text('P: $num1'),
+                const SizedBox(height: 10),
+                Text('I: $num2'),
+                const SizedBox(height: 10),
+                Text('D: $num3'),
+                
               ],
             ),
           ),
