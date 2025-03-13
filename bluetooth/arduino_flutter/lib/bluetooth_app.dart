@@ -1,7 +1,14 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
+import 'package:flutter_joystick/flutter_joystick.dart';
+
+/*
+Note: used flutter_joystick package from https://pub.dev/packages/flutter_joystick#joystick
+Also used ChatGPT to reference how to transmit float through BLE
+*/
 
 // define UUIDs as constants - these should match the Arduino code
 const String serviceUUID = "00000000-5EC4-4083-81CD-A10B8D5CF6EC";
@@ -18,6 +25,19 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final _ble = FlutterReactiveBle();
+
+  final TextEditingController myController1 = TextEditingController();
+  final TextEditingController myController2 = TextEditingController();
+  final TextEditingController myController3 = TextEditingController();
+
+  double _x = 0;
+  double _y = 0;
+  double num1 = 0;
+  double num2 = 0;
+  double num3 = 0;
+
+  JoystickMode _joystickMode = JoystickMode.all;
+
 
   StreamSubscription<DiscoveredDevice>?
       _scanSub; // subscribe to bluetooth scanning stream
@@ -47,6 +67,9 @@ class _MyHomePageState extends State<MyHomePage> {
     _notifySub?.cancel();
     _connectSub?.cancel();
     _scanSub?.cancel();
+    myController1.dispose();
+    myController2.dispose();
+    myController3.dispose();
     super.dispose();
   }
 
@@ -127,15 +150,25 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  Future<void> _sendCommand(String command) async {
+  Future<void> _sendCommand(double turn, double forward, double p, double i, double d) async {
+    
     if (_writeCharacteristic != null) {
+        final ByteData data = ByteData(8);
+        data.setFloat32(0, turn, Endian.little); // First 4 bytes: X-coordinate
+        data.setFloat32(4, forward, Endian.little); // Next 4 bytes: Y-coordinate
+        data.setFloat32(8, p, Endian.little); // Next 4 bytes: Y-coordinate
+        data.setFloat32(12, i, Endian.little); // Next 4 bytes: Y-coordinate
+        data.setFloat32(16, d, Endian.little); // Next 4 bytes: Y-coordinate
+
+        final List<int> sendData = data.buffer.asUint8List();
       try {
         await _ble.writeCharacteristicWithResponse(
+
           _writeCharacteristic!,
-          value: utf8.encode(command),
+          value: sendData,
         );
         setState(() {
-          _stateMessage = "Command '$command' sent!";
+          _stateMessage = "Command sent!";
         });
       } catch (e) {
         setState(() {
@@ -197,11 +230,31 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: _disconnectFromDevice,
               child: const Text('Disconnect'),
             ),
-          // **************** command buttons ****************
+
+          
+          
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+
+                Joystick(
+                  mode: _joystickMode,
+                  listener: (details) {
+                    setState(() {
+                      _x = double.parse(details.x.toStringAsFixed(2));
+                      _y = double.parse(details.y.toStringAsFixed(2));
+
+
+                    });
+                    _sendCommand(_x,_y, num1, num2, num3);
+                  },
+                ),
+                const SizedBox(height: 10),
+                Text('X: $_x'),
+                const SizedBox(height: 10),
+                Text('Y: $_y'),
+                /*
                 // Joystick Buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -237,14 +290,48 @@ class _MyHomePageState extends State<MyHomePage> {
                   ],
                 ),
                 const SizedBox(height: 20),
+                */
 
-                Row(
+                Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ElevatedButton(
-                      onPressed: _isConnected ? () => _sendCommand('A') : null,
-                      child: const Text('Send A'),
+
+                    TextFormField(
+
+                      controller: myController1,
+                      keyboardType: TextInputType.number,
+
                     ),
+                    SizedBox(height: 20),
+
+                    TextFormField(
+
+                      controller: myController2,
+                      keyboardType: TextInputType.number,
+
+                    ),
+                    SizedBox(height: 20),
+
+                    TextFormField(
+
+                      controller: myController3,
+                      keyboardType: TextInputType.number,
+
+                    ),
+                    SizedBox(height: 20),
+
+
+                    ElevatedButton(
+                      onPressed: (){
+                        num1 = double.tryParse(myController1.text) ?? 0;
+                        num2 = double.tryParse(myController2.text) ?? 0;
+                        num3 = double.tryParse(myController3.text) ?? 0;
+                        _sendCommand(_x,_y, num1, num2, num3);
+                      },
+                      child: const Text('Send PID'),
+                    ),
+                    
+                    /*
                     const SizedBox(width: 10),
                     ElevatedButton(
                       onPressed: _isConnected ? () => _sendCommand('B') : null,
@@ -255,8 +342,16 @@ class _MyHomePageState extends State<MyHomePage> {
                       onPressed: _isConnected ? () => _sendCommand('C') : null,
                       child: const Text('Send C'),
                     ),
+                    */
                   ],
                 ),
+                const SizedBox(height: 10),
+                Text('P: $num1'),
+                const SizedBox(height: 10),
+                Text('I: $num2'),
+                const SizedBox(height: 10),
+                Text('D: $num3'),
+                
               ],
             ),
           ),
