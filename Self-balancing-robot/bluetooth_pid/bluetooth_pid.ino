@@ -4,15 +4,14 @@
 
 #define BUFFER_SIZE 20
 
-//MOTOR 1
-#define M1F D7 //BIN1 - GREEN
-#define M1B D8 //BIN2 - BLUE
+#define M2B D10 //yellow: motor 2
+#define M1F D9  //white:  motor 1
+#define M1B D8  //green:  motor 1
+#define M2F D7  //blue:   motor 2
 
-//MOTOR 2
-#define M2F D10 //AIN1 - BLUE
-#define M2B D9 //AIN2 - GREEN
-
-float Kp = 10.0, Ki = 0.0, Kd = 0.0;
+//float Ku = 4.92, Tu = 0.80; //Ku = 4.89
+float Kp = 0.0, Ki = 0.0, Kd = 0.0;
+// float Kp = Ku*0.6, Ki = 1.3*Ku/Tu, Kd = 0.075*Ku*Tu;
 double currentAngle = 0, targetAngle = 0, PWM;
 float kAcc = 0.05, kGyro = 0.95;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
@@ -25,12 +24,13 @@ BLEService customService("00000000-5EC4-4083-81CD-A10B8D5CF6EC");
 BLECharacteristic customCharacteristic(
     "00000001-5EC4-4083-81CD-A10B8D5CF6EC", BLERead | BLEWrite | BLENotify, BUFFER_SIZE, false);
 
-float turnCoeff, driveCoeff, KpNew, KiNew, KdNew;
+float turnCoeff, driveCoeff;
 
 void setup() {
   Serial.begin(9600);
-  while (!Serial);
+  //while (!Serial);
 
+  //---------------------ble-----------------------------------
   // Initialize the built-in LED to indicate connection status
   pinMode(LED_BUILTIN, OUTPUT);
 
@@ -56,6 +56,7 @@ void setup() {
   BLE.advertise();
 
   Serial.println("Bluetooth® device active, waiting for connections...");
+  //----------------------------------------------------------------------
 
   //Set up gyroscope and pid
   if (!IMU.begin()) {
@@ -75,6 +76,7 @@ void setup() {
 }
 
 void loop() {
+  //----------------------------ble----------------------------------------
   // Wait for a BLE central to connect
   BLEDevice central = BLE.central();
 
@@ -95,19 +97,19 @@ void loop() {
 
           memcpy(&turnCoeff, data, 4);  // Extract first float
           memcpy(&driveCoeff, data + 4, 4); // Extract second float
-          memcpy(&KpNew, data + 8, 4); // Extract third float
-          memcpy(&KiNew, data + 12, 4); // Extract fourth float
-          memcpy(&KdNew, data + 16, 4); // Extract fifth float
+          memcpy(&Kp, data + 8, 4); // Extract third float
+          memcpy(&Ki, data + 12, 4); // Extract fourth float
+          memcpy(&Kd, data + 16, 4); // Extract fifth float
           
+          /*
           Serial.print("Turn Value: "); Serial.print(turnCoeff);
           Serial.print(" | Forward Drive Val: "); Serial.println(driveCoeff);
-          Serial.print("P: "); Serial.print(KpNew);
-          Serial.print(" | I: "); Serial.print(KiNew);
-          Serial.print(" | D: "); Serial.println(KdNew);
+          Serial.print("P: "); Serial.print(Kp);
+          Serial.print(" | I: "); Serial.print(Ki);
+          Serial.print(" | D: "); Serial.println(Kd);
+          */
 
-          Kp = KpNew;
-          Ki = KiNew;
-          Kd = KdNew;
+          myPID.SetTunings(Kp, Ki, Kd);
 
         }
       
@@ -132,8 +134,9 @@ void loop() {
         customCharacteristic.writeValue("Data received");
         */
       }
+      //----------------------------------------------------------------------------------
 
-          //----------------complementary filter------------------------
+      //----------------complementary filter------------------------
       if (IMU.gyroscopeAvailable() && IMU.accelerationAvailable()) {
         IMU.readAcceleration(accX, accY, accZ);
         accAngle = RAD_TO_DEG*(atan(accY/accZ));
@@ -142,27 +145,28 @@ void loop() {
         gyroAngle = (1.0/SampleRate)*gyroX;
 
         currentAngle = kGyro*(gyroAngle + currentAngle) + kAcc*(accAngle);
-        Serial.print("Current Angle: ");
+        
+        Serial.print("  Current Angle: ");
         Serial.print(currentAngle);
-        Serial.print("\tPWM: ");
+        Serial.print("\tSpeed: ");
+      
         }
       //-----------------------------------------------------------
 
       //----------------------PID---------------------------------
       myPID.Compute();
+      int speed = abs(PWM);
+      //if (speed < 50) speed = 50;
 
-      if (currentAngle > 2.0) {
-        int speed = abs(PWM);
-        if (speed < 80) speed = 80;
+      if (currentAngle > targetAngle) {
         analogWrite(M1F, 255);  
         analogWrite(M1B, 255-speed);   
         analogWrite(M2F, 255);  
         analogWrite(M2B, 255-speed);
-      } else if (currentAngle < -2.0)  {
-        if (PWM < 80) PWM = 80;
-        analogWrite(M1F, int(255-PWM));    
+      } else if (currentAngle < targetAngle)  {
+        analogWrite(M1F, 255-speed);    
         analogWrite(M1B, 255);   
-        analogWrite(M2F, int(255-PWM));   
+        analogWrite(M2F, 255-speed);   
         analogWrite(M2B, 255);
       } else {
         analogWrite(M1F, 0);    
@@ -171,9 +175,7 @@ void loop() {
         analogWrite(M2B, 0);
       }
       //----------------------------------------------------------
-      Serial.println(PWM);
-
-
+      Serial.println(speed);
     }
 
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
