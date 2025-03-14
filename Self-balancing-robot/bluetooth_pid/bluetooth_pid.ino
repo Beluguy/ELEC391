@@ -28,7 +28,7 @@ float turnCoeff, driveCoeff;
 
 void setup() {
   Serial.begin(9600);
-  //while (!Serial);
+  while (!Serial);
 
   //---------------------ble-----------------------------------
   // Initialize the built-in LED to indicate connection status
@@ -101,13 +101,13 @@ void loop() {
           memcpy(&Ki, data + 12, 4); // Extract fourth float
           memcpy(&Kd, data + 16, 4); // Extract fifth float
           
-          /*
+          
           Serial.print("Turn Value: "); Serial.print(turnCoeff);
           Serial.print(" | Forward Drive Val: "); Serial.println(driveCoeff);
           Serial.print("P: "); Serial.print(Kp);
           Serial.print(" | I: "); Serial.print(Ki);
           Serial.print(" | D: "); Serial.println(Kd);
-          */
+          
 
           myPID.SetTunings(Kp, Ki, Kd);
 
@@ -146,9 +146,11 @@ void loop() {
 
         currentAngle = kGyro*(gyroAngle + currentAngle) + kAcc*(accAngle);
         
+        /*
         Serial.print("  Current Angle: ");
         Serial.print(currentAngle);
         Serial.print("\tSpeed: ");
+        */
       
         }
       //-----------------------------------------------------------
@@ -175,7 +177,7 @@ void loop() {
         analogWrite(M2B, 0);
       }
       //----------------------------------------------------------
-      Serial.println(speed);
+      //Serial.println(speed);
     }
 
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
