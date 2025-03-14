@@ -11,7 +11,6 @@
 
 //float Ku = 4.92, Tu = 0.80; //Ku = 4.89
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
-// float Kp = Ku*0.6, Ki = 1.3*Ku/Tu, Kd = 0.075*Ku*Tu;
 double currentAngle = 0, targetAngle = 0, PWM;
 float kAcc = 0.05, kGyro = 0.95;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
@@ -100,17 +99,14 @@ void loop() {
           memcpy(&Kp, data + 8, 4); // Extract third float
           memcpy(&Ki, data + 12, 4); // Extract fourth float
           memcpy(&Kd, data + 16, 4); // Extract fifth float
-          
-          
+
           Serial.print("Turn Value: "); Serial.print(turnCoeff);
           Serial.print(" | Forward Drive Val: "); Serial.println(driveCoeff);
           Serial.print("P: "); Serial.print(Kp);
           Serial.print(" | I: "); Serial.print(Ki);
           Serial.print(" | D: "); Serial.println(Kd);
-          
 
           myPID.SetTunings(Kp, Ki, Kd);
-
         }
       
        /*
@@ -145,12 +141,6 @@ void loop() {
         gyroAngle = (1.0/SampleRate)*gyroX;
 
         currentAngle = kGyro*(gyroAngle + currentAngle) + kAcc*(accAngle);
-        
-        /*
-        Serial.print("  Current Angle: ");
-        Serial.print(currentAngle);
-        Serial.print("\tSpeed: ");
-        */
       
         }
       //-----------------------------------------------------------
@@ -158,7 +148,7 @@ void loop() {
       //----------------------PID---------------------------------
       myPID.Compute();
       int speed = abs(PWM);
-      //if (speed < 50) speed = 50;
+      if (speed < 50) speed = 50;
 
       if (currentAngle > targetAngle) {
         analogWrite(M1F, 255);  
