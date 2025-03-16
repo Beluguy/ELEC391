@@ -99,13 +99,21 @@ void loop() {
           memcpy(&Kp, data + 8, 4); // Extract third float
           memcpy(&Ki, data + 12, 4); // Extract fourth float
           memcpy(&Kd, data + 16, 4); // Extract fifth float
+<<<<<<< Updated upstream
 
+=======
+          
+>>>>>>> Stashed changes
           Serial.print("Turn Value: "); Serial.print(turnCoeff);
           Serial.print(" | Forward Drive Val: "); Serial.println(driveCoeff);
           Serial.print("P: "); Serial.print(Kp);
           Serial.print(" | I: "); Serial.print(Ki);
           Serial.print(" | D: "); Serial.println(Kd);
+<<<<<<< Updated upstream
 
+=======
+          
+>>>>>>> Stashed changes
           myPID.SetTunings(Kp, Ki, Kd);
         }
       
@@ -141,7 +149,14 @@ void loop() {
         gyroAngle = (1.0/SampleRate)*gyroX;
 
         currentAngle = kGyro*(gyroAngle + currentAngle) + kAcc*(accAngle);
+<<<<<<< Updated upstream
       
+=======
+        
+        Serial.print("\tCurrent Angle: ");
+        Serial.print(currentAngle);
+        Serial.print("\tSpeed: ");
+>>>>>>> Stashed changes
         }
       //-----------------------------------------------------------
 
