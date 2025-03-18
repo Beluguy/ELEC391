@@ -71,7 +71,6 @@ void setup() {
   pinMode(M1B, OUTPUT);
   pinMode(M2F, OUTPUT);
   pinMode(M2B, OUTPUT);
-
 }
 
 void loop() {
@@ -124,11 +123,18 @@ void loop() {
 
       //----------------------PID---------------------------------
       myPID.Compute();
+
       //int speed = abs(PWM);
       //if (speed < 50) speed = 50;
       //int speed = round(50.0+(abs(PWM)/255.0)*205.0);
       
       int speed = map(abs(PWM), 0, 255, 50, 255);
+
+      if (currentAngle > (targetAngle)) {
+
+      int speed = abs(PWM);
+      if (speed < 50) speed = 50;
+      //int speed = round(50.0+(abs(PWM)/255.0)*205.0);
 
       if (currentAngle > (targetAngle)) {
         analogWrite(M1F, 255);  
@@ -147,14 +153,11 @@ void loop() {
         analogWrite(M2B, 255);
       }
       //----------------------------------------------------------
-      Serial.print(PWM);
       Serial.print("    ");
       Serial.println(speed);
-      
     }
 
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     Serial.println("Disconnected from central.");
-    
   }
 }
