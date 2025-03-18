@@ -12,7 +12,7 @@
 //float Ku = 4.92, Tu = 0.80; //Ku = 4.89
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
 double currentAngle = 0, targetAngle = 0, PWM;
-float kAcc = 0.05, kGyro = 0.95;
+float kAcc = 0.2, kGyro = 0.8;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
 
 //Specify the links and initial tuning parameters
@@ -71,7 +71,6 @@ void setup() {
   pinMode(M1B, OUTPUT);
   pinMode(M2F, OUTPUT);
   pinMode(M2B, OUTPUT);
-
 }
 
 void loop() {
@@ -124,10 +123,9 @@ void loop() {
 
       //----------------------PID---------------------------------
       myPID.Compute();
-      //int speed = abs(PWM);
-      //if (speed < 50) speed = 50;
-      int speed = round(50.0+(abs(PWM)/255.0)*205.0);
-
+      int speed = abs(PWM);
+      if (speed < 50) speed = 50;
+      //int speed = round(50.0+(abs(PWM)/255.0)*205.0);
 
       if (currentAngle > (targetAngle + 3.0)) {
         analogWrite(M1F, 255);  
@@ -146,14 +144,11 @@ void loop() {
         analogWrite(M2B, 255);
       }
       //----------------------------------------------------------
-      Serial.print(PWM);
       Serial.print("    ");
       Serial.println(speed);
-      
     }
 
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     Serial.println("Disconnected from central.");
-    
   }
 }
