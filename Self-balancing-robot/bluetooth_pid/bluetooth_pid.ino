@@ -117,7 +117,6 @@ void loop() {
         Serial.print("\tCurrent Angle: ");
         Serial.print(currentAngle);
         Serial.print("\tSpeed: ");
-
         }
       //-----------------------------------------------------------
 
@@ -129,12 +128,6 @@ void loop() {
       //int speed = round(50.0+(abs(PWM)/255.0)*205.0);
       
       int speed = map(abs(PWM), 0, 255, 50, 255);
-
-      if (currentAngle > (targetAngle)) {
-
-      int speed = abs(PWM);
-      if (speed < 50) speed = 50;
-      //int speed = round(50.0+(abs(PWM)/255.0)*205.0);
 
       if (currentAngle > (targetAngle)) {
         analogWrite(M1F, 255);  
@@ -153,7 +146,6 @@ void loop() {
         analogWrite(M2B, 255);
       }
       //----------------------------------------------------------
-      Serial.print("    ");
       Serial.println(speed);
     }
 
