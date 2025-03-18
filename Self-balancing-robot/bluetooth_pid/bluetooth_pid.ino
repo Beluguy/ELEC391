@@ -27,7 +27,7 @@ float turnCoeff, driveCoeff;
 
 void setup() {
   Serial.begin(9600);
-  while (!Serial);
+  //while (!Serial);
 
   //---------------------ble-----------------------------------
   // Initialize the built-in LED to indicate connection status
@@ -90,48 +90,28 @@ void loop() {
       if (customCharacteristic.written()) {
         int length = customCharacteristic.valueLength();
         
-        if (length == 20) { // Expecting 20 bytes (5 floats)
-          uint8_t data[20];
+        if (length == 12) { // Expecting 20 bytes (5 floats)
+          uint8_t data[12];
           customCharacteristic.readValue(data, length);
 
-          memcpy(&turnCoeff, data, 4);  // Extract first float
-          memcpy(&driveCoeff, data + 4, 4); // Extract second float
-          memcpy(&Kp, data + 8, 4); // Extract third float
-          memcpy(&Ki, data + 12, 4); // Extract fourth float
-          memcpy(&Kd, data + 16, 4); // Extract fifth float
-
+          //memcpy(&turnCoeff, data, 4);  // Extract first float
+          //memcpy(&driveCoeff, data + 4, 4); // Extract second float
+          memcpy(&Kp, data, 4); // Extract third float
+          memcpy(&Ki, data + 4, 4); // Extract fourth float
+          memcpy(&Kd, data + 8, 4); // Extract fifth float
+          /*
           Serial.print("Turn Value: "); Serial.print(turnCoeff);
           Serial.print(" | Forward Drive Val: "); Serial.println(driveCoeff);
           Serial.print("P: "); Serial.print(Kp);
           Serial.print(" | I: "); Serial.print(Ki);
           Serial.print(" | D: "); Serial.println(Kd);
+          */
 
           myPID.SetTunings(Kp, Ki, Kd);
         }
-      
-       /*
-       // Get the length of the received data
-        int length = customCharacteristic.valueLength();
-
-        // Read the received data
-        const unsigned char* receivedData = customCharacteristic.value();
-
-        // Create a properly terminated string
-        char receivedString[length + 1]; // +1 for null terminator
-        memcpy(receivedString, receivedData, length);
-        receivedString[length] = '\0'; // Null-terminate the string
-
-        // Print the received data to the Serial Monitor
-        Serial.print("Received data: ");
-        Serial.println(receivedString);
-
-
-        // Optionally, respond by updating the characteristic's value
-        customCharacteristic.writeValue("Data received");
-        */
       }
       //----------------------------------------------------------------------------------
-
+      
       //----------------complementary filter------------------------
       if (IMU.gyroscopeAvailable() && IMU.accelerationAvailable()) {
         IMU.readAcceleration(accX, accY, accZ);
@@ -147,30 +127,36 @@ void loop() {
 
       //----------------------PID---------------------------------
       myPID.Compute();
-      int speed = abs(PWM);
-      if (speed < 50) speed = 50;
+      //int speed = abs(PWM);
+      //if (speed < 50) speed = 50;
+      int speed = round(50.0+(abs(PWM)/255.0)*205.0);
 
-      if (currentAngle > targetAngle) {
+
+      if (currentAngle > (targetAngle + 3.0)) {
         analogWrite(M1F, 255);  
         analogWrite(M1B, 255-speed);   
         analogWrite(M2F, 255);  
         analogWrite(M2B, 255-speed);
-      } else if (currentAngle < targetAngle)  {
+      } else if (currentAngle < (targetAngle - 3.0))  {
         analogWrite(M1F, 255-speed);    
         analogWrite(M1B, 255);   
         analogWrite(M2F, 255-speed);   
         analogWrite(M2B, 255);
       } else {
-        analogWrite(M1F, 0);    
-        analogWrite(M1B, 0);   
-        analogWrite(M2F, 0);   
-        analogWrite(M2B, 0);
+        analogWrite(M1F, 255);    
+        analogWrite(M1B, 255);   
+        analogWrite(M2F, 255);   
+        analogWrite(M2B, 255);
       }
       //----------------------------------------------------------
-      //Serial.println(speed);
+      Serial.print(PWM);
+      Serial.print("    ");
+      Serial.println(speed);
+      
     }
 
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     Serial.println("Disconnected from central.");
+    
   }
 }

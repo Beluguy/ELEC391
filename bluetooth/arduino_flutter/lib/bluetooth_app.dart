@@ -146,12 +146,12 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _sendCommand(double turn, double forward, double p, double i, double d) async {
     
     if (_writeCharacteristic != null) {
-        final ByteData data = ByteData(20);
-        data.setFloat32(0, turn, Endian.little); // First 4 bytes: X-coordinate
-        data.setFloat32(4, forward, Endian.little); // Next 4 bytes: Y-coordinate
-        data.setFloat32(8, p, Endian.little); // Next 4 bytes: p
-        data.setFloat32(12, i, Endian.little); // Next 4 bytes: i
-        data.setFloat32(16, d, Endian.little); // Next 4 bytes: d
+        final ByteData data = ByteData(12);
+        //data.setFloat32(0, turn, Endian.little); // First 4 bytes: X-coordinate
+        //data.setFloat32(4, forward, Endian.little); // Next 4 bytes: Y-coordinate
+        data.setFloat32(0, p, Endian.little); // Next 4 bytes: p
+        data.setFloat32(4, i, Endian.little); // Next 4 bytes: i
+        data.setFloat32(8, d, Endian.little); // Next 4 bytes: d
 
         final List<int> sendData = data.buffer.asUint8List();
       try {
@@ -240,7 +240,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
                     });
-                    _sendCommand(_x,_y, num1, num2, num3);
+                    //_sendCommand(_x,_y, num1, num2, num3);
                   },
                 ),
                 const SizedBox(height: 10),
@@ -304,7 +304,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       },
 
                       onChangeEnd: (_) {
-                        _sendCommand(_x,_y, num1, num2, num3);
+                        _sendCommand(_x, _y, num1, num2, num3);
                       },
                     
                     ),
@@ -323,7 +323,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         //
                       },
                       onChangeEnd: (_) {
-                        _sendCommand(_x,_y, num1, num2, num3);
+                        _sendCommand(_x, _y, num1, num2, num3);
                       },
 
                     ),
@@ -339,10 +339,10 @@ class _MyHomePageState extends State<MyHomePage> {
                         setState(() {
                           num3 = double.parse(value.toStringAsFixed(2));
                         });
-                        //_sendCommand(_x,_y, num1, num2, num3);
+                        
                       },
                       onChangeEnd: (_) {
-                        _sendCommand(_x,_y, num1, num2, num3);
+                        _sendCommand(_x, _y, num1, num2, num3);
                       },
                     ),
                     SizedBox(height: 10),
@@ -350,7 +350,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
                     ElevatedButton(
                       onPressed: (){
-                        _sendCommand(_x,_y, num1, num2, num3);
+                        //_sendCommand(num1, num2, num3);
                       },
                       child: const Text('Send PID'),
                     ),
