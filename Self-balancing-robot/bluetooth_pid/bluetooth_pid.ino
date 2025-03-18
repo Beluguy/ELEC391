@@ -12,7 +12,7 @@
 //float Ku = 4.92, Tu = 0.80; //Ku = 4.89
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
 double currentAngle = 0, targetAngle = 0, PWM;
-float kAcc = 0.05, kGyro = 0.95;
+float kAcc = 0.2, kGyro = 0.8;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
 
 //Specify the links and initial tuning parameters
@@ -126,15 +126,16 @@ void loop() {
       myPID.Compute();
       //int speed = abs(PWM);
       //if (speed < 50) speed = 50;
-      int speed = round(50.0+(abs(PWM)/255.0)*205.0);
+      //int speed = round(50.0+(abs(PWM)/255.0)*205.0);
+      
+      int speed = map(abs(PWM), 0, 255, 50, 255);
 
-
-      if (currentAngle > (targetAngle + 3.0)) {
+      if (currentAngle > (targetAngle)) {
         analogWrite(M1F, 255);  
         analogWrite(M1B, 255-speed);   
         analogWrite(M2F, 255);  
         analogWrite(M2B, 255-speed);
-      } else if (currentAngle < (targetAngle - 3.0))  {
+      } else if (currentAngle < (targetAngle))  {
         analogWrite(M1F, 255-speed);    
         analogWrite(M1B, 255);   
         analogWrite(M2F, 255-speed);   
