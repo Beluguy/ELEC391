@@ -20,15 +20,14 @@ PID myPID(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd, DIRECT);
 
 // Define a custom BLE service and characteristic
 BLEService customService("fc096266-ad93-482d-928c-c2560ea93a4e");
-BLECharacteristic customCharacteristic(
-    "9ff0183d-6d83-4d05-a10e-55c142bee2d1", BLERead | BLEWrite | BLENotify, BUFFER_SIZE, false);
+BLECharacteristic customCharacteristic("9ff0183d-6d83-4d05-a10e-55c142bee2d1", BLERead | BLEWrite | BLENotify, BUFFER_SIZE, false);
 
 float turnCoeff, driveCoeff;
 
 void setup() {
   Serial.begin(9600);
   //while (!Serial);
-  delay(2000);
+  //delay(2000);
   //---------------------ble-----------------------------------
   // Initialize the built-in LED to indicate connection status
   pinMode(LED_BUILTIN, OUTPUT);
@@ -114,30 +113,22 @@ void loop() {
         gyroAngle = (1.0/SampleRate)*gyroX;
 
         currentAngle = kGyro*(gyroAngle + currentAngle) + kAcc*(accAngle);
-        
-
         Serial.print("\tCurrent Angle: ");
         Serial.print(currentAngle);
         Serial.print("\tSpeed: ");
-
         }
       //-----------------------------------------------------------
 
       //----------------------PID---------------------------------
       myPID.Compute();
-      
       int speed = map(abs(PWM), 0, 255, 40, 255);
 
-
       if (currentAngle > (targetAngle + 1.0)) {
-
         analogWrite(M1F, 255);  
         analogWrite(M1B, 255-speed);   
         analogWrite(M2F, 255);  
         analogWrite(M2B, 255-speed);
-
       } else if (currentAngle < (targetAngle - 1.0))  {
-
         analogWrite(M1F, 255-speed);    
         analogWrite(M1B, 255);   
         analogWrite(M2F, 255-speed);   
@@ -149,11 +140,8 @@ void loop() {
         analogWrite(M2B, 255);
       }
       //----------------------------------------------------------
-
-
       Serial.println(speed);
     }
-
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     Serial.println("Disconnected from central.");
   }
