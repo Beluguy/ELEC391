@@ -10,7 +10,7 @@
 #define M2F D7  //blue:   motor 2
 
 //float Ku = 4.92, Tu = 0.80; //Ku = 4.89
-float Kp = 0.0, Ki = 0.0, Kd = 0.0;
+float Kp = 0, Ki = 0, Kd = 0;
 double currentAngle = 0, targetAngle = 0, PWM;
 float kAcc = 0.2, kGyro = 0.8;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
@@ -19,16 +19,16 @@ float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
 PID myPID(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd, DIRECT);
 
 // Define a custom BLE service and characteristic
-BLEService customService("00000000-5EC4-4083-81CD-A10B8D5CF6EC");
+BLEService customService("fc096266-ad93-482d-928c-c2560ea93a4e");
 BLECharacteristic customCharacteristic(
-    "00000001-5EC4-4083-81CD-A10B8D5CF6EC", BLERead | BLEWrite | BLENotify, BUFFER_SIZE, false);
+    "9ff0183d-6d83-4d05-a10e-55c142bee2d1", BLERead | BLEWrite | BLENotify, BUFFER_SIZE, false);
 
 float turnCoeff, driveCoeff;
 
 void setup() {
   Serial.begin(9600);
   //while (!Serial);
-
+  delay(2000);
   //---------------------ble-----------------------------------
   // Initialize the built-in LED to indicate connection status
   pinMode(LED_BUILTIN, OUTPUT);
@@ -52,6 +52,7 @@ void setup() {
   customCharacteristic.writeValue("Waiting for data");
 
   // Start advertising the service
+  Serial.println("before advertise");
   BLE.advertise();
 
   Serial.println("Bluetooth® device active, waiting for connections...");
@@ -114,9 +115,9 @@ void loop() {
 
         currentAngle = kGyro*(gyroAngle + currentAngle) + kAcc*(accAngle);
         
-        Serial.print("\tCurrent Angle: ");
-        Serial.print(currentAngle);
-        Serial.print("\tSpeed: ");
+        //Serial.print("\tCurrent Angle: ");
+        //Serial.print(currentAngle);
+        //Serial.print("\tSpeed: ");
 
         }
       //-----------------------------------------------------------
@@ -130,18 +131,12 @@ void loop() {
       
       int speed = map(abs(PWM), 0, 255, 50, 255);
 
-      if (currentAngle > (targetAngle)) {
-
-      int speed = abs(PWM);
-      if (speed < 50) speed = 50;
-      //int speed = round(50.0+(abs(PWM)/255.0)*205.0);
-
-      if (currentAngle > (targetAngle)) {
+      if (currentAngle > (targetAngle+3.0)) {
         analogWrite(M1F, 255);  
         analogWrite(M1B, 255-speed);   
         analogWrite(M2F, 255);  
         analogWrite(M2B, 255-speed);
-      } else if (currentAngle < (targetAngle))  {
+      } else if (currentAngle < (targetAngle-3.0))  {
         analogWrite(M1F, 255-speed);    
         analogWrite(M1B, 255);   
         analogWrite(M2F, 255-speed);   
@@ -153,7 +148,7 @@ void loop() {
         analogWrite(M2B, 255);
       }
       //----------------------------------------------------------
-      Serial.print("    ");
+      //Serial.print("    ");
       Serial.println(speed);
     }
 

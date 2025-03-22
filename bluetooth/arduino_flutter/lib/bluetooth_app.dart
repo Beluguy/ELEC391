@@ -11,8 +11,8 @@ Also used ChatGPT to reference how to transmit float through BLE
 */
 
 // define UUIDs as constants - these should match the Arduino code
-const String serviceUUID = "00000000-5EC4-4083-81CD-A10B8D5CF6EC";
-const String characteristicUUID = "00000001-5EC4-4083-81CD-A10B8D5CF6EC";
+const String serviceUUID = "fc096266-ad93-482d-928c-c2560ea93a4e";
+const String characteristicUUID = "9ff0183d-6d83-4d05-a10e-55c142bee2d1";
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -291,9 +291,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
                     Slider(
                       min: 0.0,
-                      max: 20.0,
+                      max: 150.0,
                       value: num1,
-                      divisions: 200,
+                      divisions: 1500,
                       label: '$num1',
                       
                       onChanged: (value) {
@@ -312,9 +312,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
                     Slider(
                       min: 0.0,
-                      max: 20.0,
+                      max: 150.0,
                       value: num2,
-                      divisions: 200,
+                      divisions: 1500,
                       label: '$num2',
                       onChanged: (value) {
                         setState(() {
@@ -333,9 +333,9 @@ class _MyHomePageState extends State<MyHomePage> {
                       min: 0.0,
                       max: 20.0,
                       value: num3,
-                      divisions: 200,
+                      divisions: 2000,
                       label: '$num3',
-                      onChanged: (value) {
+                      onChanged: (value) {  
                         setState(() {
                           num3 = double.parse(value.toStringAsFixed(2));
                         });
