@@ -7,10 +7,10 @@
 #define M2F D7  //blue:   motor 2
 
 float Ku = 4.92, Tu = 0.80; //Ku = 4.89
-float Kp = Ku, Ki = 0.3, Kd = 0.0;
+float Kp = 20.0, Ki = 0.0, Kd = 0.0;
 // float Kp = Ku*0.6, Ki = 1.3*Ku/Tu, Kd = 0.075*Ku*Tu;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
-float kAcc = 0.05, kGyro = 0.95;
+float kAcc = 0.3, kGyro = 0.7;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
 
 //Specify the links and initial tuning parameters
@@ -53,23 +53,23 @@ void loop() {
   //----------------------PID---------------------------------
   myPID.Compute();
   int speed = abs(PWM);
-  if (speed < 50) speed = 50;
+  if (speed < 30) speed = 50;
 
-  if (currentAngle > targetAngle) {
+  if (currentAngle > targetAngle + 0.5) {
     analogWrite(M1F, 255);  
     analogWrite(M1B, 255-speed);   
     analogWrite(M2F, 255);  
     analogWrite(M2B, 255-speed);
-  } else if (currentAngle < targetAngle)  {
+  } else if (currentAngle < targetAngle - 0.5)  {
     analogWrite(M1F, 255-speed);    
     analogWrite(M1B, 255);   
     analogWrite(M2F, 255-speed);   
     analogWrite(M2B, 255);
   } else {
-    analogWrite(M1F, 0);    
-    analogWrite(M1B, 0);   
-    analogWrite(M2F, 0);   
-    analogWrite(M2B, 0);
+    analogWrite(M1F, 255);    
+    analogWrite(M1B, 255);   
+    analogWrite(M2F, 255);   
+    analogWrite(M2B, 255);
   }
   //----------------------------------------------------------
   Serial.println(speed);
