@@ -122,12 +122,12 @@ void loop() {
       myPID.Compute();
       int speed = abs(PWM);
 
-      if (currentAngle > (targetAngle + 1.0)) {
+      if (currentAngle > (targetAngle + 0.5)) {
         analogWrite(M1F, 255);  
         analogWrite(M1B, 255-speed);   
         analogWrite(M2F, 255);  
         analogWrite(M2B, 255-speed);
-      } else if (currentAngle < (targetAngle - 1.0))  {
+      } else if (currentAngle < (targetAngle - 0.5))  {
         analogWrite(M1F, 255-speed);    
         analogWrite(M1B, 255);   
         analogWrite(M2F, 255-speed);   
@@ -142,6 +142,6 @@ void loop() {
       Serial.println(speed);
     }
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
-    Serial.println("Disconnected from central.");
+    //Serial.println("Disconnected from central.");
   }
 }
