@@ -10,7 +10,7 @@
 #define M2F D7  //blue:   motor 2
 
 //float Ku = 4.92, Tu = 0.80; //Ku = 4.89
-float Kp = 0, Ki = 0, Kd = 0;
+float Kp = 16.0, Ki = 25.5, Kd = 0.3;
 double currentAngle = 0, targetAngle = 0, PWM;
 float kAcc = 0.3, kGyro = 0.7;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
@@ -27,7 +27,6 @@ float turnCoeff, driveCoeff;
 void setup() {
   Serial.begin(9600);
   //while (!Serial);
-  //delay(2000);
   //---------------------ble-----------------------------------
   // Initialize the built-in LED to indicate connection status
   pinMode(LED_BUILTIN, OUTPUT);
@@ -121,7 +120,7 @@ void loop() {
 
       //----------------------PID---------------------------------
       myPID.Compute();
-      int speed = map(abs(PWM), 0, 255, 40, 255);
+      int speed = abs(PWM);
 
       if (currentAngle > (targetAngle + 1.0)) {
         analogWrite(M1F, 255);  
