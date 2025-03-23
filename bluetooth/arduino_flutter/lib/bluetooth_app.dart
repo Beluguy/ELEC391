@@ -31,6 +31,14 @@ class _MyHomePageState extends State<MyHomePage> {
   double num1 = 0;
   double num2 = 0;
   double num3 = 0;
+  double lastInput1 = 0;
+  double lastInput2 = 0;
+  double lastInput3 = 0;
+
+
+  final TextEditingController myController1 = TextEditingController();
+  final TextEditingController myController2 = TextEditingController();
+  final TextEditingController myController3 = TextEditingController();
 
   JoystickMode _joystickMode = JoystickMode.all;
 
@@ -63,6 +71,9 @@ class _MyHomePageState extends State<MyHomePage> {
     _notifySub?.cancel();
     _connectSub?.cancel();
     _scanSub?.cancel();
+    myController1.dispose();
+    myController2.dispose();
+    myController3.dispose();
     super.dispose();
   }
 
@@ -230,7 +241,7 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-
+                /*
                 Joystick(
                   mode: _joystickMode,
                   listener: (details) {
@@ -247,110 +258,55 @@ class _MyHomePageState extends State<MyHomePage> {
                 Text('X: $_x'),
                 const SizedBox(height: 10),
                 Text('Y: $_y'),
-                /*
-                // Joystick Buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ElevatedButton(
-                      onPressed:
-                          _isConnected ? () => _sendCommand('FORWARD') : null,
-                      child: const Icon(Icons.arrow_upward),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ElevatedButton(
-                      onPressed:
-                          _isConnected ? () => _sendCommand('LEFT') : null,
-                      child: const Icon(Icons.arrow_back),
-                    ),
-                    const SizedBox(width: 10),
-                    ElevatedButton(
-                      onPressed:
-                          _isConnected ? () => _sendCommand('BACK') : null,
-                      child: const Icon(Icons.arrow_downward),
-                    ),
-                    const SizedBox(width: 10),
-                    ElevatedButton(
-                      onPressed:
-                          _isConnected ? () => _sendCommand('RIGHT') : null,
-                      child: const Icon(Icons.arrow_forward),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
                 */
+                
+                
 
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-
-                    Slider(
-                      min: 0.0,
-                      max: 150.0,
-                      value: num1,
-                      divisions: 1500,
-                      label: '$num1',
-                      
-                      onChanged: (value) {
-                        setState(() {
-                          num1 = double.parse(value.toStringAsFixed(2));
-                        });
-                        
-                      },
-
-                      onChangeEnd: (_) {
-                        _sendCommand(_x, _y, num1, num2, num3);
-                      },
                     
-                    ),
-                    SizedBox(height: 10),
-
-                    Slider(
-                      min: 0.0,
-                      max: 150.0,
-                      value: num2,
-                      divisions: 1500,
-                      label: '$num2',
-                      onChanged: (value) {
-                        setState(() {
-                          num2 = double.parse(value.toStringAsFixed(2));
-                        });
-                        //
-                      },
-                      onChangeEnd: (_) {
-                        _sendCommand(_x, _y, num1, num2, num3);
-                      },
-
-                    ),
-                    SizedBox(height: 10),
-
-                    Slider(
-                      min: 0.0,
-                      max: 20.0,
-                      value: num3,
-                      divisions: 2000,
-                      label: '$num3',
-                      onChanged: (value) {  
-                        setState(() {
-                          num3 = double.parse(value.toStringAsFixed(2));
-                        });
-                        
-                      },
-                      onChangeEnd: (_) {
-                        _sendCommand(_x, _y, num1, num2, num3);
-                      },
-                    ),
-                    SizedBox(height: 10),
-
-
+                    Text('LAST INPUT: P: $lastInput1, I: $lastInput2, D: $lastInput3'),
+                    const SizedBox(height: 10),
+                    Text('CURRENT INPUT: P: $num1, I: $num2, D: $num3'),
+ 
+                    TextFormField(
+ 
+                      controller: myController1,
+                      keyboardType: TextInputType.number,
+ 
+                     ),
+                     SizedBox(height: 20),
+ 
+                     TextFormField(
+ 
+                       controller: myController2,
+                       keyboardType: TextInputType.number,
+ 
+                     ),
+                     SizedBox(height: 20),
+ 
+                     TextFormField(
+ 
+                       controller: myController3,
+                       keyboardType: TextInputType.number,
+ 
+                     ),
+                     SizedBox(height: 20),
+                    
                     ElevatedButton(
                       onPressed: (){
-                        //_sendCommand(num1, num2, num3);
+                        lastInput1 = num1;
+                        lastInput2 = num2;
+                        lastInput3 = num3;
+
+                        num1 = double.tryParse(myController1.text) ?? 0;
+                        num2 = double.tryParse(myController2.text) ?? 0;
+                        num3 = double.tryParse(myController3.text) ?? 0;
+                        if(_isConnected){
+                          _sendCommand(_x, _y, num1, num2, num3);
+                        }
+                        
                       },
                       child: const Text('Send PID'),
                     ),
