@@ -1,7 +1,7 @@
 M = .427;       % mass of the cart (total = 1.55 kg)
 m = 1.09;       % mass of the pendulum   
 b = 0.1;        % coefficient of friction for cart
-I = 0.1;       % length to pendulum center of mass
+I = 0.06;       % length to pendulum center of mass
 g = 9.81;       % gravity
 l = m*I^2;      % mass moment of inertia of the pendulum
 
