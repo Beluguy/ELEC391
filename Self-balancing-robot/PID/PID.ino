@@ -7,7 +7,8 @@
 #define M2F D7  //blue:   motor 2
 
 float Ku = 4.92, Tu = 0.80; //Ku = 4.89
-float Kp = 20.0, Ki = 0.0, Kd = 0.0;
+float Kp = 16.0, Ki = 25.5, Kd = 0.3;
+//float aggKp = 15.0, aggKi = 0.0, aggKd = 0.0;
 // float Kp = Ku*0.6, Ki = 1.3*Ku/Tu, Kd = 0.075*Ku*Tu;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
 float kAcc = 0.3, kGyro = 0.7;
@@ -19,7 +20,6 @@ PID myPID(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd, DIRECT);
 
 void setup() {
   Serial.begin(9600);
-  delay(2000);
   //while (!Serial);
   if (!IMU.begin()) {
     Serial.println("Failed to initialize IMU!");
@@ -53,17 +53,19 @@ void loop() {
   //-----------------------------------------------------------
 
   //----------------------PID---------------------------------
+  //if (abs(currentAngle) < 7.0) myPID.SetTunings(Kp, Ki, Kd);
+  //else myPID.SetTunings(aggKp, aggKi, aggKd);
+
   myPID.Compute();
-
   int speed = abs(PWM);
-  if (speed < 30) speed = 50;
+  //if (speed > 180) speed = 255;
 
-  if (currentAngle > targetAngle + 0.5) {
+  if (currentAngle > targetAngle + 0.3) {
     analogWrite(M1F, 255);  
     analogWrite(M1B, 255-speed);   
     analogWrite(M2F, 255);  
     analogWrite(M2B, 255-speed);
-  } else if (currentAngle < targetAngle - 0.5)  {
+  } else if (currentAngle < targetAngle - 0.3)  {
     analogWrite(M1F, 255-speed);    
     analogWrite(M1B, 255);   
     analogWrite(M2F, 255-speed);   
