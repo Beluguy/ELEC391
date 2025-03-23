@@ -10,9 +10,9 @@
 #define M2F D7  //blue:   motor 2
 
 //float Ku = 4.92, Tu = 0.80; //Ku = 4.89
-float Kp = 16.0, Ki = 25.5, Kd = 0.3;
+float Kp = 0.0, Ki = 0.0, Kd = 0.0;
 double currentAngle = 0, targetAngle = 0, PWM;
-float kAcc = 0.3, kGyro = 0.7;
+float kAcc = 0.5, kGyro = 0.5;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
 
 //Specify the links and initial tuning parameters
@@ -32,7 +32,7 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
 
   if (!BLE.begin()) {
-    Serial.println("Starting BLE failed!");
+    //Serial.println("Starting BLE failed!");
     while (1);
   }
 
@@ -50,15 +50,15 @@ void setup() {
   customCharacteristic.writeValue("Waiting for data");
 
   // Start advertising the service
-  Serial.println("before advertise");
+  //Serial.println("before advertise");
   BLE.advertise();
 
-  Serial.println("Bluetooth® device active, waiting for connections...");
+  //Serial.println("Bluetooth® device active, waiting for connections...");
   //----------------------------------------------------------------------
 
   //Set up gyroscope and pid
   if (!IMU.begin()) {
-    Serial.println("Failed to initialize IMU!");
+    //Serial.println("Failed to initialize IMU!");
     while (1);
   }
   SampleRate = IMU.gyroscopeSampleRate();
@@ -78,8 +78,8 @@ void loop() {
   BLEDevice central = BLE.central();
 
   if (central) {
-    Serial.print("Connected to central: ");
-    Serial.println(central.address());
+    //Serial.print("Connected to central: ");
+    //Serial.println(central.address());
     digitalWrite(LED_BUILTIN, HIGH); // Turn on LED to indicate connection
 
     // Keep running while connected
@@ -113,8 +113,9 @@ void loop() {
 
         currentAngle = kGyro*(gyroAngle + currentAngle) + kAcc*(accAngle);
         Serial.print("\tCurrent Angle: ");
-        Serial.print(currentAngle);
-        Serial.print("\tSpeed: ");
+        Serial.println(currentAngle);
+
+        //Serial.print("\tSpeed: ");
         }
       //-----------------------------------------------------------
 
@@ -122,12 +123,12 @@ void loop() {
       myPID.Compute();
       int speed = abs(PWM);
 
-      if (currentAngle > (targetAngle + 0.5)) {
+      if (currentAngle > (targetAngle + 1.0)) {
         analogWrite(M1F, 255);  
         analogWrite(M1B, 255-speed);   
         analogWrite(M2F, 255);  
         analogWrite(M2B, 255-speed);
-      } else if (currentAngle < (targetAngle - 0.5))  {
+      } else if (currentAngle < (targetAngle - 1.0))  {
         analogWrite(M1F, 255-speed);    
         analogWrite(M1B, 255);   
         analogWrite(M2F, 255-speed);   
@@ -139,7 +140,7 @@ void loop() {
         analogWrite(M2B, 255);
       }
       //----------------------------------------------------------
-      Serial.println(speed);
+      //Serial.println(speed);
     }
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     //Serial.println("Disconnected from central.");
