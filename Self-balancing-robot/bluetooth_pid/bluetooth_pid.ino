@@ -17,7 +17,7 @@ mbed::PwmOut M1BPin( digitalPinToPinName( M1B ) );
 mbed::PwmOut M2FPin( digitalPinToPinName( M2F ) );
 
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
-double currentAngle = 0, targetAngle = 0, PWM;
+double currentAngle = 0.0, targetAngle = 0.0, PWM;
 float kAcc = 0.1, kGyro = 0.9;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
 
@@ -29,6 +29,11 @@ BLEService customService("fc096266-ad93-482d-928c-c2560ea93a4e");
 BLECharacteristic customCharacteristic("9ff0183d-6d83-4d05-a10e-55c142bee2d1", BLERead | BLEWrite | BLENotify, BUFFER_SIZE, false);
 
 float turnCoeff, driveCoeff;
+
+unsigned long loopStartTime;
+unsigned long loopTime;
+unsigned long maxTime = 0;
+unsigned long minTime = 1000000; // Initialize with a large value
 
 void setup() {
   Serial.begin(9600);
@@ -68,7 +73,7 @@ void setup() {
   }
   SampleRate = IMU.gyroscopeSampleRate();
   myPID.SetOutputLimits(-255, 255);
-  myPID.SetSampleTime(10);
+  myPID.SetSampleTime(1);
   myPID.SetMode(AUTOMATIC);
 
   pinMode(M1F, OUTPUT);
@@ -82,6 +87,7 @@ void setup() {
 }
 
 void loop() {
+  loopStartTime = micros();
   //----------------------------ble----------------------------------------
   // Wait for a BLE central to connect
   BLEDevice central = BLE.central();
@@ -118,33 +124,41 @@ void loop() {
         accAngle = RAD_TO_DEG*(atan(accY/accZ));
 
         IMU.readGyroscope(gyroX, gyroY, gyroZ);
-        gyroAngle = (1.0/SampleRate)*gyroX;
+        gyroAngle = (1.0/SampleRate)*gyroZ + currentAngle;
 
-        currentAngle = kGyro*(gyroAngle + currentAngle) + kAcc*(accAngle);
-        Serial.print("Current Angle: ");
-        Serial.print(currentAngle);
-        Serial.print("\tSpeed: ");
+        currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
+        //Serial.print("Current Angle: ");
+        // Serial.print(currentAngle);
+        // Serial.print("\t");
+        // Serial.print(gyroAngle);
+        // Serial.print("\t");
+        // Serial.print(accAngle);
+        // Serial.println("\t");
         }
       //-----------------------------------------------------------
 
       //----------------------PID---------------------------------
       myPID.Compute();
       float speed = abs(PWM)/255.0;
-
-      if (currentAngle > (targetAngle + 1.0)) {
+      //Serial.println(speed);
+      if (currentAngle > (targetAngle)) {
         /*
         analogWrite(M1F, 255);  
         analogWrite(M1B, 255-speed);   
         analogWrite(M2F, 255);  
         analogWrite(M2B, 255-speed);
         */
-        M1FPin.write(1.0);
-        M1BPin.write(1.0 - speed);
-        M2FPin.write(1.0);
-        M2BPin.write(1.0 - speed);
+        // M1FPin.write(1.0);
+        // M1BPin.write(1.0 - speed);
+        // M2FPin.write(1.0);
+        // M2BPin.write(1.0 - speed);
       
+        M1FPin.write(speed);
+        M1BPin.write(0.0);
+        M2FPin.write(speed);
+        M2BPin.write(0.0);
         
-      } else if (currentAngle < (targetAngle - 1.0))  {
+      } else if (currentAngle < (targetAngle))  {
         /*
         analogWrite(M1F, 255-speed);    
         analogWrite(M1B, 255);   
@@ -152,10 +166,15 @@ void loop() {
         analogWrite(M2B, 255);
         */
 
-        M1FPin.write(1.0 - speed);
-        M1BPin.write(1.0);
-        M2FPin.write(1.0 - speed);
-        M2BPin.write(1.0);
+        // M1FPin.write(1.0 - speed);
+        // M1BPin.write(1.0);
+        // M2FPin.write(1.0 - speed);
+        // M2BPin.write(1.0);
+
+        M1FPin.write(speed);
+        M1BPin.write(0.0);
+        M2FPin.write(speed);
+        M2BPin.write(0.0);
       } else {
         /*
         analogWrite(M1F, 255);    
@@ -164,13 +183,25 @@ void loop() {
         analogWrite(M2B, 255);
         */
 
-        M1FPin.write(1.0);
-        M1BPin.write(1.0);
-        M2FPin.write(1.0);
-        M2BPin.write(1.0);
+        // M1FPin.write(1.0);
+        // M1BPin.write(1.0);
+        // M2FPin.write(1.0);
+        // M2BPin.write(1.0);
+
+        M1FPin.write(0.0);
+        M1BPin.write(0.0);
+        M2FPin.write(0.0);
+        M2BPin.write(0.0);
       }
       //----------------------------------------------------------
-      Serial.println(speed);
+      loopTime = micros() - loopStartTime;
+
+      //if (loopTime > maxTime) maxTime = loopTime;
+      //if (loopTime < minTime) minTime = loopTime;
+
+      //Serial.println(loopTime);
+      //Serial.print("\t");
+      //Serial.println(minTime);
     }
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     //Serial.println("Disconnected from central.");

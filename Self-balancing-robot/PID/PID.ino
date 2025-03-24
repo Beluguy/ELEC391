@@ -1,21 +1,30 @@
 #include "Arduino_BMI270_BMM150.h"
 #include <PID_v1.h>
+#include "mbed.h"
 
 #define M2B D10 //yellow: motor 2
 #define M1F D9  //white:  motor 1
 #define M1B D8  //green:  motor 1
 #define M2F D7  //blue:   motor 2
+#define PWM_FREQ 5000.0
 
-float Kp = 7.0, Ki = 0.0, Kd = 0.12;
-//float aggKp = 15.0, aggKi = 0.0, aggKd = 0.0;
-// float Kp = Ku*0.6, Ki = 1.3*Ku/Tu, Kd = 0.075*Ku*Tu;
+mbed::PwmOut M2BPin( digitalPinToPinName( M2B ) );
+mbed::PwmOut M1FPin ( digitalPinToPinName( M1F ) );
+mbed::PwmOut M1BPin( digitalPinToPinName( M1B ) );
+mbed::PwmOut M2FPin( digitalPinToPinName( M2F ) );
+
+float Kp = 25.0, Ki = 0.0, Kd = 0.05;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
-float kAcc = 0.01, kGyro = 0.99;
-
+float kAcc = 0.2, kGyro = 0.8;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
 
 //Specify the links and initial tuning parameters
 PID myPID(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd, DIRECT);
+
+// unsigned long loopStartTime;
+// unsigned long loopTime;
+// unsigned long maxTime = 0;
+// unsigned long minTime = 1000000; // Initialize with a large value
 
 void setup() {
   Serial.begin(9600);
@@ -26,31 +35,37 @@ void setup() {
   }
   SampleRate = IMU.gyroscopeSampleRate();
   myPID.SetOutputLimits(-255, 255);
-  myPID.SetSampleTime(10);
+  myPID.SetSampleTime(1);
   myPID.SetMode(AUTOMATIC);
 
   pinMode(M1F, OUTPUT);
   pinMode(M1B, OUTPUT);
   pinMode(M2F, OUTPUT);
   pinMode(M2B, OUTPUT);
+  M2BPin.period(1.0/PWM_FREQ);
+  M1FPin.period(1.0/PWM_FREQ);
+  M1BPin.period(1.0/PWM_FREQ);
+  M2FPin.period(1.0/PWM_FREQ);
 }
 
 void loop() {
+  //loopStartTime = micros();
+
   //----------------complementary filter------------------------
   if (IMU.gyroscopeAvailable() && IMU.accelerationAvailable()) {
     IMU.readAcceleration(accX, accY, accZ);
     accAngle = RAD_TO_DEG*(accY/accZ);
 
     IMU.readGyroscope(gyroX, gyroY, gyroZ);
-    gyroAngle = (1.0/SampleRate)*gyroX;
+    gyroAngle = (1.0/SampleRate)*gyroZ;
 
     currentAngle = kGyro*(gyroAngle + currentAngle) + kAcc*(accAngle);
-    Serial.print("Current Angle: ");
-    Serial.print(currentAngle);
-    Serial.print("  gyro: ");
-    Serial.print(gyroAngle);
-    Serial.print("  acc angle: ");
-    Serial.println(accAngle);
+    // Serial.print("Current Angle: ");
+    // Serial.print(currentAngle);
+    // Serial.print("  gyro: ");
+    // Serial.print(gyroAngle);
+    // Serial.print("  acc angle: ");
+    // Serial.println(accAngle);
 
     //Serial.print("\tSpeed: ");
     }
@@ -58,25 +73,34 @@ void loop() {
 
   //----------------------PID---------------------------------
   myPID.Compute();
-  int speed = abs(PWM);
-  //if (speed > 180) speed = 255;
-
-  if (currentAngle > targetAngle + 0.5) {
-    analogWrite(M1F, 255);  
-    analogWrite(M1B, 255-speed);   
-    analogWrite(M2F, 255);  
-    analogWrite(M2B, 255-speed);
-  } else if (currentAngle < targetAngle - 0.5)  {
-    analogWrite(M1F, 255-speed);    
-    analogWrite(M1B, 255);   
-    analogWrite(M2F, 255-speed);   
-    analogWrite(M2B, 255);
+  float speed = abs(PWM)/255.0;
+  
+  if (currentAngle > targetAngle) {
+    M1FPin.write(speed);
+    M1BPin.write(0.0);
+    M2FPin.write(speed);
+    M2BPin.write(0.0);
+  } else if (currentAngle < targetAngle)  {
+    M1FPin.write(0.0);
+    M1BPin.write(speed);
+    M2FPin.write(0.0);
+    M2BPin.write(speed);
   } else {
-    analogWrite(M1F, 255);    
-    analogWrite(M1B, 255);   
-    analogWrite(M2F, 255);   
-    analogWrite(M2B, 255);
+    M1FPin.write(0.0);
+    M1BPin.write(0.0);
+    M2FPin.write(0.0);
+    M2BPin.write(0.0);
   }
   //----------------------------------------------------------
   //Serial.println(speed);
+  //loopTime = micros() - loopStartTime;
+
+  //if (loopTime > maxTime) maxTime = loopTime;
+  //if (loopTime < minTime) minTime = loopTime;
+
+  //Serial.println(loopTime);
+  // Serial.print("\t");
+  // Serial.print(minTime);
+  // Serial.print("\t");
+  // Serial.println(maxTime);
 }
