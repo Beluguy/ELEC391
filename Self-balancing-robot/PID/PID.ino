@@ -67,14 +67,13 @@ void loop() {
     // Serial.print("  acc angle: ");
     // Serial.println(accAngle);
 
-    //Serial.print("\tSpeed: ");
     }
   //-----------------------------------------------------------
 
   //----------------------PID---------------------------------
   myPID.Compute();
   float speed = abs(PWM)/255.0;
-  
+
   if (currentAngle > targetAngle) {
     M1FPin.write(speed);
     M1BPin.write(0.0);
