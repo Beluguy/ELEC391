@@ -13,7 +13,7 @@ mbed::PwmOut M1FPin ( digitalPinToPinName( M1F ) );
 mbed::PwmOut M1BPin( digitalPinToPinName( M1B ) );
 mbed::PwmOut M2FPin( digitalPinToPinName( M2F ) );
 
-float Kp = 26.0, Ki = 0.0, Kd = 0.05;
+float Kp = 40.0, Ki = 100.0, Kd = 0.1;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
 float kAcc = 0.1, kGyro = 0.9;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
@@ -60,16 +60,15 @@ void loop() {
     static double lastTime = millis();
     double dt = (millis() - lastTime) / 1000.0;
     lastTime = millis();
-    gyroAngle = gyroZ * dt;
+    gyroAngle = gyroZ * dt + currentAngle;
 
-    currentAngle = kGyro*(gyroAngle + currentAngle) + kAcc*(accAngle);
-    // Serial.print("Current Angle: ");
-    // Serial.print(currentAngle);
-    // Serial.print("  gyro: ");
-    // Serial.print(gyroAngle);
-    // Serial.print("  acc angle: ");
-    // Serial.println(accAngle);
-
+    currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
+    //Serial.print("Current Angle: ");
+    Serial.print(currentAngle);
+    Serial.print("\t");
+    Serial.print(gyroAngle);
+    Serial.print("\t");
+    Serial.println(accAngle);
     }
   //-----------------------------------------------------------
 
