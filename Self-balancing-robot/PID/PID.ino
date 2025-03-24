@@ -6,16 +6,16 @@
 #define M1F D9  //white:  motor 1
 #define M1B D8  //green:  motor 1
 #define M2F D7  //blue:   motor 2
-#define PWM_FREQ 5000.0
+#define PWM_FREQ 10000.0
 
 mbed::PwmOut M2BPin( digitalPinToPinName( M2B ) );
 mbed::PwmOut M1FPin ( digitalPinToPinName( M1F ) );
 mbed::PwmOut M1BPin( digitalPinToPinName( M1B ) );
 mbed::PwmOut M2FPin( digitalPinToPinName( M2F ) );
 
-float Kp = 25.0, Ki = 0.0, Kd = 0.05;
+float Kp = 26.0, Ki = 0.0, Kd = 0.05;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
-float kAcc = 0.2, kGyro = 0.8;
+float kAcc = 0.1, kGyro = 0.9;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
 
 //Specify the links and initial tuning parameters
