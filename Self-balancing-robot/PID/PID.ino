@@ -57,7 +57,10 @@ void loop() {
     accAngle = RAD_TO_DEG*(accY/accZ);
 
     IMU.readGyroscope(gyroX, gyroY, gyroZ);
-    gyroAngle = (1.0/SampleRate)*gyroZ;
+    static double lastTime = millis();
+    double dt = (millis() - lastTime) / 1000.0;
+    lastTime = millis();
+    gyroAngle = gyroZ * dt;
 
     currentAngle = kGyro*(gyroAngle + currentAngle) + kAcc*(accAngle);
     // Serial.print("Current Angle: ");
