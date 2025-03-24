@@ -1,3 +1,5 @@
+#include <Wire.h>
+#include <AS5600.h>
 #include "Arduino_BMI270_BMM150.h"
 #include <PID_v1.h>
 #include "mbed.h"
@@ -13,9 +15,9 @@ mbed::PwmOut M1FPin ( digitalPinToPinName( M1F ) );
 mbed::PwmOut M1BPin( digitalPinToPinName( M1B ) );
 mbed::PwmOut M2FPin( digitalPinToPinName( M2F ) );
 
-float Kp = 40.0, Ki = 100.0, Kd = 0.1;
+float Kp = 70.0, Ki = 370.0, Kd = 0.15;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
-float kAcc = 0.1, kGyro = 0.9;
+float kAcc = 0.15, kGyro = 0.85;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
 
 //Specify the links and initial tuning parameters
@@ -64,11 +66,11 @@ void loop() {
 
     currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
     //Serial.print("Current Angle: ");
-    Serial.print(currentAngle);
-    Serial.print("\t");
-    Serial.print(gyroAngle);
-    Serial.print("\t");
-    Serial.println(accAngle);
+    // Serial.print(currentAngle);
+    // Serial.print("\t");
+    // Serial.print(gyroAngle);
+    // Serial.print("\t");
+    // Serial.println(accAngle);
     }
   //-----------------------------------------------------------
 
@@ -93,6 +95,8 @@ void loop() {
     M2BPin.write(0.0);
   }
   //----------------------------------------------------------
+
+  //---------------------Calculate loop time--------------------
   //Serial.println(speed);
   //loopTime = micros() - loopStartTime;
 
@@ -104,4 +108,5 @@ void loop() {
   // Serial.print(minTime);
   // Serial.print("\t");
   // Serial.println(maxTime);
+  /---------------------------------------------------------------
 }
