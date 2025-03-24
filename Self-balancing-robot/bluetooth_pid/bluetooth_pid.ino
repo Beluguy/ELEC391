@@ -1,18 +1,25 @@
 #include <ArduinoBLE.h>
 #include "Arduino_BMI270_BMM150.h"
 #include <PID_v1.h>
+#include "mbed.h"
 
 #define BUFFER_SIZE 20
+#define PWM_FREQ 10000.0
 
 #define M2B D10 //yellow: motor 2
 #define M1F D9  //white:  motor 1
 #define M1B D8  //green:  motor 1
 #define M2F D7  //blue:   motor 2
 
+mbed::PwmOut M2BPin( digitalPinToPinName( M2B ) );
+mbed::PwmOut M1FPin ( digitalPinToPinName( M1F ) );
+mbed::PwmOut M1BPin( digitalPinToPinName( M1B ) );
+mbed::PwmOut M2FPin( digitalPinToPinName( M2F ) );
+
 //float Ku = 4.92, Tu = 0.80; //Ku = 4.89
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
 double currentAngle = 0, targetAngle = 0, PWM;
-float kAcc = 0.5, kGyro = 0.5;
+float kAcc = 0.3, kGyro = 0.7;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
 
 //Specify the links and initial tuning parameters
@@ -70,6 +77,10 @@ void setup() {
   pinMode(M1B, OUTPUT);
   pinMode(M2F, OUTPUT);
   pinMode(M2B, OUTPUT);
+  M2BPin.period(1.0/PWM_FREQ);
+  M1FPin.period(1.0/PWM_FREQ);
+  M1BPin.period(1.0/PWM_FREQ);
+  M2FPin.period(1.0/PWM_FREQ);
 }
 
 void loop() {
@@ -112,35 +123,60 @@ void loop() {
         gyroAngle = (1.0/SampleRate)*gyroX;
 
         currentAngle = kGyro*(gyroAngle + currentAngle) + kAcc*(accAngle);
-        Serial.print("\tCurrent Angle: ");
-        Serial.println(currentAngle);
+        Serial.print("Current Angle: ");
+        Serial.print(currentAngle);
 
-        //Serial.print("\tSpeed: ");
+        Serial.print("\tSpeed: ");
         }
       //-----------------------------------------------------------
 
       //----------------------PID---------------------------------
       myPID.Compute();
-      int speed = abs(PWM);
+      float speed = abs(PWM)/255.0;
+
 
       if (currentAngle > (targetAngle + 1.0)) {
+        /*
         analogWrite(M1F, 255);  
         analogWrite(M1B, 255-speed);   
         analogWrite(M2F, 255);  
         analogWrite(M2B, 255-speed);
+        */
+        
+        M1FPin.write(1.0);
+        M1BPin.write(1.0 - speed);
+        M2FPin.write(1.0);
+        M2BPin.write(1.0 - speed);
+        
+        
+        
       } else if (currentAngle < (targetAngle - 1.0))  {
+        /*
         analogWrite(M1F, 255-speed);    
         analogWrite(M1B, 255);   
         analogWrite(M2F, 255-speed);   
         analogWrite(M2B, 255);
+        */
+
+        M1FPin.write(1.0 - speed);
+        M1BPin.write(1.0);
+        M2FPin.write(1.0 - speed);
+        M2BPin.write(1.0);
       } else {
+        /*
         analogWrite(M1F, 255);    
         analogWrite(M1B, 255);   
         analogWrite(M2F, 255);   
         analogWrite(M2B, 255);
+        */
+
+        M1FPin.write(1.0);
+        M1BPin.write(1.0);
+        M2FPin.write(1.0);
+        M2BPin.write(1.0);
       }
       //----------------------------------------------------------
-      //Serial.println(speed);
+      Serial.println(speed);
     }
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     //Serial.println("Disconnected from central.");

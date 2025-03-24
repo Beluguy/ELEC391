@@ -63,6 +63,9 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     _scanSub = _ble.scanForDevices(withServices: []).listen(_onScanUpdate);
+    Future.delayed(Duration(seconds: 10), () {
+      _scanSub?.cancel(); // Stop scanning after 10 seconds
+    });
   }
 
   // when terminating cancel all the subscriptions
@@ -102,8 +105,16 @@ class _MyHomePageState extends State<MyHomePage> {
               _isConnected = true;
             });
             _onConnected(_selectedDeviceId!);
-          }
-        },
+          }  else if (update.connectionState == DeviceConnectionState.disconnected) {
+          // Handle unexpected disconnections
+          setState(() {
+            _stateMessage = 'Disconnected from $_selectedDeviceName.';
+            _isConnected = false;
+            _writeCharacteristic = null;
+          });
+
+        }
+      },
         onError: (error) {
           setState(() {
             _stateMessage = 'Connection error: $error';

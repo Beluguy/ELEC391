@@ -11,7 +11,7 @@ float Kp = 16.0, Ki = 25.5, Kd = 0.3;
 //float aggKp = 15.0, aggKi = 0.0, aggKd = 0.0;
 // float Kp = Ku*0.6, Ki = 1.3*Ku/Tu, Kd = 0.075*Ku*Tu;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
-float kAcc = 0.3, kGyro = 0.7;
+float kAcc = 0.01, kGyro = 0.99;
 
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
 
@@ -40,7 +40,7 @@ void loop() {
   //----------------complementary filter------------------------
   if (IMU.gyroscopeAvailable() && IMU.accelerationAvailable()) {
     IMU.readAcceleration(accX, accY, accZ);
-    accAngle = RAD_TO_DEG*(atan(accY/accZ));
+    accAngle = RAD_TO_DEG*(accY/accZ);
 
     IMU.readGyroscope(gyroX, gyroY, gyroZ);
     gyroAngle = (1.0/SampleRate)*gyroX;
@@ -48,7 +48,12 @@ void loop() {
     currentAngle = kGyro*(gyroAngle + currentAngle) + kAcc*(accAngle);
     Serial.print("Current Angle: ");
     Serial.print(currentAngle);
-    Serial.print("\tSpeed: ");
+    Serial.print("  gyro: ");
+    Serial.print(gyroAngle);
+    Serial.print("  acc angle: ");
+    Serial.println(accAngle);
+
+    //Serial.print("\tSpeed: ");
     }
   //-----------------------------------------------------------
 
@@ -77,5 +82,5 @@ void loop() {
     analogWrite(M2B, 255);
   }
   //----------------------------------------------------------
-  Serial.println(speed);
+  //Serial.println(speed);
 }
