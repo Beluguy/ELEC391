@@ -63,6 +63,7 @@ void loop() {
     double dt = (millis() - lastTime) / 1000.0;
     lastTime = millis();
     gyroAngle = gyroZ * dt + currentAngle;
+    Serial.println(dt);
 
     currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
     //Serial.print("Current Angle: ");
@@ -98,15 +99,17 @@ void loop() {
 
   //---------------------Calculate loop time--------------------
   //Serial.println(speed);
-  //loopTime = micros() - loopStartTime;
+  /*
+  loopTime = micros() - loopStartTime;
 
-  //if (loopTime > maxTime) maxTime = loopTime;
-  //if (loopTime < minTime) minTime = loopTime;
+  if (loopTime > maxTime) maxTime = loopTime;
+  if (loopTime < minTime) minTime = loopTime;
 
-  //Serial.println(loopTime);
-  // Serial.print("\t");
-  // Serial.print(minTime);
-  // Serial.print("\t");
-  // Serial.println(maxTime);
-  /---------------------------------------------------------------
+  Serial.println(loopTime);
+  Serial.print("\t");
+  Serial.print(minTime);
+  Serial.print("\t");
+  Serial.println(maxTime);
+  */
+  //---------------------------------------------------------------
 }

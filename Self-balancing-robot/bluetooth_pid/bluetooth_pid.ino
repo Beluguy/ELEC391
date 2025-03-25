@@ -17,8 +17,8 @@ mbed::PwmOut M1BPin( digitalPinToPinName( M1B ) );
 mbed::PwmOut M2FPin( digitalPinToPinName( M2F ) );
 
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
-double currentAngle = 0.0, targetAngle = 0.0, PWM;
-float kAcc = 0.1, kGyro = 0.9;
+double currentAngle = 0.0, targetAngle = 0.5, PWM;
+float kAcc = 0.05, kGyro = 0.95;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
 
 //Specify the links and initial tuning parameters
@@ -30,10 +30,7 @@ BLECharacteristic customCharacteristic("9ff0183d-6d83-4d05-a10e-55c142bee2d1", B
 
 float turnCoeff, driveCoeff;
 
-unsigned long loopStartTime;
-unsigned long loopTime;
-unsigned long maxTime = 0;
-unsigned long minTime = 1000000; // Initialize with a large value
+
 
 void setup() {
   Serial.begin(9600);
@@ -87,7 +84,7 @@ void setup() {
 }
 
 void loop() {
-  loopStartTime = micros();
+  
   //----------------------------ble----------------------------------------
   // Wait for a BLE central to connect
   BLEDevice central = BLE.central();
@@ -104,7 +101,7 @@ void loop() {
         int length = customCharacteristic.valueLength();
         
         if (length == 12) { // Expecting 20 bytes (5 floats)
-          uint8_t data[12];
+          static uint8_t data[12];
           customCharacteristic.readValue(data, length);
 
           //memcpy(&turnCoeff, data, 4);  // Extract first float
@@ -121,25 +118,39 @@ void loop() {
       //----------------complementary filter------------------------
       if (IMU.gyroscopeAvailable() && IMU.accelerationAvailable()) {
         IMU.readAcceleration(accX, accY, accZ);
-        accAngle = RAD_TO_DEG*(atan(accY/accZ));
+        accAngle = RAD_TO_DEG*(accY/accZ);
 
         IMU.readGyroscope(gyroX, gyroY, gyroZ);
-        gyroAngle = (1.0/SampleRate)*gyroZ + currentAngle;
+        static double lastTime = millis();
+        double dt = (millis() - lastTime) / 1000.0;
+        lastTime = millis();
+        gyroAngle = gyroZ * dt + currentAngle;
+        Serial.println(dt);
 
         currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
         //Serial.print("Current Angle: ");
-        // Serial.print(currentAngle);
-        // Serial.print("\t");
-        // Serial.print(gyroAngle);
-        // Serial.print("\t");
-        // Serial.print(accAngle);
+        Serial.print(currentAngle);
+        Serial.print("\t");
+        Serial.print(gyroAngle);
+        Serial.print("\t");
+        Serial.println(accAngle);
         // Serial.println("\t");
         }
       //-----------------------------------------------------------
 
       //----------------------PID---------------------------------
       myPID.Compute();
-      float speed = abs(PWM)/255.0;
+      static float speed;
+      static float speedNew;
+      static bool speedFactorOver;
+
+      speed = abs(PWM)/255.0;
+      speedNew = 1.05*speed;
+
+      if (speed*1.05 >= 1.0){
+        speedFactorOver = 1;
+      }
+
       //Serial.println(speed);
       if (currentAngle > (targetAngle)) {
         /*
@@ -152,11 +163,18 @@ void loop() {
         // M1BPin.write(1.0 - speed);
         // M2FPin.write(1.0);
         // M2BPin.write(1.0 - speed);
-      
-        M1FPin.write(speed);
-        M1BPin.write(0.0);
-        M2FPin.write(speed);
-        M2BPin.write(0.0);
+        if(speedFactorOver){
+          M1FPin.write(speed);
+          M1BPin.write(0.0);
+          M2FPin.write(speed);
+          M2BPin.write(0.0);
+        } else {
+          M1FPin.write(speedNew);
+          M1BPin.write(0.0);
+          M2FPin.write(speedNew);
+          M2BPin.write(0.0);
+        }
+        
         
       } else if (currentAngle < (targetAngle))  {
         /*
@@ -171,10 +189,10 @@ void loop() {
         // M2FPin.write(1.0 - speed);
         // M2BPin.write(1.0);
 
-        M1FPin.write(speed);
-        M1BPin.write(0.0);
-        M2FPin.write(speed);
-        M2BPin.write(0.0);
+        M1FPin.write(0.0);
+        M1BPin.write(speed);
+        M2FPin.write(0.0);
+        M2BPin.write(speed);
       } else {
         /*
         analogWrite(M1F, 255);    
@@ -194,16 +212,23 @@ void loop() {
         M2BPin.write(0.0);
       }
       //----------------------------------------------------------
+      /*
+      static unsigned long loopStartTime = micros();
+      static unsigned long loopTime = micros();
+      static unsigned long maxTime = 0;
+      static unsigned long minTime = 1000000; // Initialize with a large value
       loopTime = micros() - loopStartTime;
 
-      //if (loopTime > maxTime) maxTime = loopTime;
-      //if (loopTime < minTime) minTime = loopTime;
+      if (loopTime > maxTime) maxTime = loopTime;
+      if (loopTime < minTime) minTime = loopTime;
 
-      //Serial.println(loopTime);
-      //Serial.print("\t");
-      //Serial.println(minTime);
+      Serial.println(maxTime);
+      Serial.print("\t");
+      Serial.println(minTime);
+      */
     }
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     //Serial.println("Disconnected from central.");
   }
+  //loopStartTime = micros();
 }
