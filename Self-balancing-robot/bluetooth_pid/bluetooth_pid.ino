@@ -201,10 +201,10 @@ void loop() {
         analogWrite(M2B, 255);
         */
 
-          // M1FPin.write(1.0);
-          // M1BPin.write(1.0);
-          // M2FPin.write(1.0);
-          // M2BPin.write(1.0);
+      // M1FPin.write(1.0);
+      // M1BPin.write(1.0);
+      // M2FPin.write(1.0);
+      // M2BPin.write(1.0);
 
         M1FPin.write(0.0);
         M1BPin.write(0.0);
@@ -212,23 +212,8 @@ void loop() {
         M2BPin.write(0.0);
       }
       //----------------------------------------------------------
-      /*
-      static unsigned long loopStartTime = micros();
-      static unsigned long loopTime = micros();
-      static unsigned long maxTime = 0;
-      static unsigned long minTime = 1000000; // Initialize with a large value
-      loopTime = micros() - loopStartTime;
-
-      if (loopTime > maxTime) maxTime = loopTime;
-      if (loopTime < minTime) minTime = loopTime;
-
-      Serial.println(maxTime);
-      Serial.print("\t");
-      Serial.println(minTime);
-      */
     }
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     //Serial.println("Disconnected from central.");
   }
-  //loopStartTime = micros();
 }
