@@ -15,7 +15,7 @@ mbed::PwmOut M1FPin ( digitalPinToPinName( M1F ) );
 mbed::PwmOut M1BPin( digitalPinToPinName( M1B ) );
 mbed::PwmOut M2FPin( digitalPinToPinName( M2F ) );
 
-float Kp = 70.0, Ki = 370.0, Kd = 0.15;
+float Kp = 30.0, Ki = 370.0, Kd = 0.2;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
 float kAcc = 0.15, kGyro = 0.85;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
@@ -67,7 +67,7 @@ void loop() {
 
     currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
     //Serial.print("Current Angle: ");
-    // Serial.print(currentAngle);
+    Serial.println(currentAngle);
     // Serial.print("\t");
     // Serial.print(gyroAngle);
     // Serial.print("\t");
@@ -105,11 +105,11 @@ void loop() {
   if (loopTime > maxTime) maxTime = loopTime;
   if (loopTime < minTime) minTime = loopTime;
 
+<<<<<<< HEAD
   Serial.println(loopTime);
   Serial.print("\t");
   Serial.print(minTime);
   Serial.print("\t");
   Serial.println(maxTime);
   */
-  //---------------------------------------------------------------
 }
