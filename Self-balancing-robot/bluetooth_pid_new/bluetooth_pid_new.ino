@@ -1,17 +1,28 @@
-#include <ArduinoBLE.h>
-#include "Arduino_BMI270_BMM150.h"
-#include "ArduPID.h"
-ArduPID myController;
+#include <ArduinoBLE.h>             // Bluetooth
+#include "Arduino_BMI270_BMM150.h"  // IMU
+#include "ArduPID.h"                // PID
+//#include <Wire.h>                   // I2C
+//#include <AS5600.h>                 // Encoder
+#include "mbed.h"                   // Customer PWM freq
 
 #define BUFFER_SIZE 20
+#define PWM_FREQ 10000.0
+
 #define M2B D10 //yellow: motor 2
 #define M1F D9  //white:  motor 1
 #define M1B D8  //green:  motor 1
 #define M2F D7  //blue:   motor 2
 
+mbed::PwmOut M2BPin( digitalPinToPinName( M2B ) );
+mbed::PwmOut M1FPin ( digitalPinToPinName( M1F ) );
+mbed::PwmOut M1BPin( digitalPinToPinName( M1B ) );
+mbed::PwmOut M2FPin( digitalPinToPinName( M2F ) );
+
+ArduPID myPID;
+
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
-double currentAngle = 0.0, targetAngle = 0.0, PWM = 0.0;
-float kAcc = 0.3, kGyro = 0.7;
+double currentAngle = 0.0, targetAngle = 0.5, PWM;
+float kAcc = 0.05, kGyro = 0.95;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
 
 // Define a custom BLE service and characteristic
@@ -19,6 +30,7 @@ BLEService customService("fc096266-ad93-482d-928c-c2560ea93a4e");
 BLECharacteristic customCharacteristic("9ff0183d-6d83-4d05-a10e-55c142bee2d1", BLERead | BLEWrite | BLENotify, BUFFER_SIZE, false);
 
 float turnCoeff, driveCoeff;
+
 
 void setup() {
   Serial.begin(9600);
@@ -46,7 +58,6 @@ void setup() {
   customCharacteristic.writeValue("Waiting for data");
 
   // Start advertising the service
-  //Serial.println("before advertise");
   BLE.advertise();
 
   //Serial.println("Bluetooth® device active, waiting for connections...");
@@ -58,14 +69,18 @@ void setup() {
     while (1);
   }
   SampleRate = IMU.gyroscopeSampleRate();
-  myController.begin(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd);   //Specify the links and initial tuning parameters
-  myController.setOutputLimits(-255, 255);
+  myPID.etOutputLimits(-255, 255);
+  myPID.SetSampleTime(1);
   myController.start();
 
   pinMode(M1F, OUTPUT);
   pinMode(M1B, OUTPUT);
   pinMode(M2F, OUTPUT);
   pinMode(M2B, OUTPUT);
+  M2BPin.period(1.0/PWM_FREQ);
+  M1FPin.period(1.0/PWM_FREQ);
+  M1BPin.period(1.0/PWM_FREQ);
+  M2FPin.period(1.0/PWM_FREQ);
 }
 
 void loop() {
@@ -85,7 +100,7 @@ void loop() {
         int length = customCharacteristic.valueLength();
         
         if (length == 12) { // Expecting 20 bytes (5 floats)
-          uint8_t data[12];
+          static uint8_t data[12];
           customCharacteristic.readValue(data, length);
 
           //memcpy(&turnCoeff, data, 4);  // Extract first float
@@ -94,58 +109,79 @@ void loop() {
           memcpy(&Ki, data + 4, 4); // Extract fourth float
           memcpy(&Kd, data + 8, 4); // Extract fifth float
           
-          myController.stop();
-          myController.start();
-          }
+          myPID.setTunings(Kp, Ki, Kd);
+        }
+      }
       //----------------------------------------------------------------------------------
       
       //----------------complementary filter------------------------
       if (IMU.gyroscopeAvailable() && IMU.accelerationAvailable()) {
         IMU.readAcceleration(accX, accY, accZ);
-        accAngle = RAD_TO_DEG*(atan(accY/accZ));
+        accAngle = RAD_TO_DEG*(accY/accZ);
 
         IMU.readGyroscope(gyroX, gyroY, gyroZ);
-        gyroAngle = (1.0/SampleRate)*gyroX;
+        static double lastTime = millis();
+        double dt = (millis() - lastTime) / 1000.0;
+        lastTime = millis();
+        gyroAngle = gyroZ * dt + currentAngle;
+        Serial.print(dt);
 
-        currentAngle = kGyro*(gyroAngle + currentAngle) + kAcc*(accAngle);
+        currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
+        //Serial.print("Current Angle: ");
+        Serial.print(currentAngle);
+        Serial.print("\t");
+        Serial.print(gyroAngle);
+        Serial.print("\t");
+        Serial.println(accAngle);
         }
       //-----------------------------------------------------------
 
       //----------------------PID---------------------------------
-      myController.compute();
+      myPID.compute();
       int speed = abs(PWM);
-      if (speed < 25) speed = 25;
-      if (currentAngle > (targetAngle + 2.0)) {
-        analogWrite(M1F, 255);  
-        analogWrite(M1B, 255-speed);   
-        analogWrite(M2F, 255);  
-        analogWrite(M2B, 255-speed);
-      } else if (currentAngle < (targetAngle - 2.0)) {
-        analogWrite(M1F, 255-speed);    
-        analogWrite(M1B, 255);   
-        analogWrite(M2F, 255-speed);   
-        analogWrite(M2B, 255);
+      // static float speedNew;
+      // static bool speedFactorOver;
+
+      // speed = abs(PWM)/255.0;
+      // speedNew = 1.05*speed;
+
+      // if (speed*1.05 >= 1.0){
+      //   speedFactorOver = 1;
+      // }
+
+      //Serial.println(speed);
+      if (currentAngle > (targetAngle)) {
+        // M1FPin.write(1.0);
+        // M1BPin.write(1.0 - speed);
+        // M2FPin.write(1.0);
+        // M2BPin.write(1.0 - speed);
+        M1FPin.write(speed);
+        M1BPin.write(0.0);
+        M2FPin.write(speed);
+        M2BPin.write(0.0);
+      } else if (currentAngle < (targetAngle))  {
+        // M1FPin.write(1.0 - speed);
+        // M1BPin.write(1.0);
+        // M2FPin.write(1.0 - speed);
+        // M2BPin.write(1.0);
+        M1FPin.write(0.0);
+        M1BPin.write(speed);
+        M2FPin.write(0.0);
+        M2BPin.write(speed);
       } else {
-        analogWrite(M1F, 255);    
-        analogWrite(M1B, 255);   
-        analogWrite(M2F, 255);   
-        analogWrite(M2B, 255);
+        // M1FPin.write(1.0);
+        // M1BPin.write(1.0);
+        // M2FPin.write(1.0);
+        // M2BPin.write(1.0);
+        M1FPin.write(0.0);
+        M1BPin.write(0.0);
+        M2FPin.write(0.0);
+        M2BPin.write(0.0);
       }
-
-      if (currentAngle > 30.0) myController.stop();
-      else myController.start();
-
-      myController.debug(&Serial, "myController", PRINT_INPUT    | // Can include or comment out any of these terms to print
-                                              PRINT_OUTPUT   | // in the Serial plotter
-                                              PRINT_SETPOINT |
-                                              PRINT_BIAS     |
-                                              PRINT_P        |
-                                              PRINT_I        |
-                                              PRINT_D);
       //----------------------------------------------------------
-      }
+      Serial.println(speed);
+    }
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     //Serial.println("Disconnected from central.");
-    }
   }
 }
