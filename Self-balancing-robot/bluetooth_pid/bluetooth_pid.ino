@@ -69,7 +69,7 @@ void setup() {
   }
   //SampleRate = IMU.gyroscopeSampleRate();
   myPID.SetOutputLimits(-255, 255);
-  myPID.SetSampleTime(1);
+  myPID.SetSampleTime(10);
   myPID.SetMode(AUTOMATIC);
 
   pinMode(M1F, OUTPUT);

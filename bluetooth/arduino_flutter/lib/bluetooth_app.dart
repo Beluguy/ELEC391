@@ -3,10 +3,11 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
-import 'package:flutter_joystick/flutter_joystick.dart';
+//import 'package:flutter_joystick/flutter_joystick.dart';
 
 /*
 Note: used flutter_joystick package from https://pub.dev/packages/flutter_joystick#joystick
+UPDATE MAR 25: NOT USING JOYSTICK
 Also used ChatGPT to reference how to transmit float through BLE
 */
 
@@ -26,8 +27,6 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final _ble = FlutterReactiveBle();
 
-  double _x = 0;
-  double _y = 0;
   double num1 = 0;
   double num2 = 0;
   double num3 = 0;
@@ -40,7 +39,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController myController2 = TextEditingController();
   final TextEditingController myController3 = TextEditingController();
 
-  JoystickMode _joystickMode = JoystickMode.all;
+  //JoystickMode _joystickMode = JoystickMode.all;
 
 
   StreamSubscription<DiscoveredDevice>?
@@ -270,7 +269,51 @@ class _MyHomePageState extends State<MyHomePage> {
                 const SizedBox(height: 10),
                 Text('Y: $_y'),
                 */
-                
+                // Joystick Buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      onPressed:
+                          _isConnected ? () => _sendCommand(1,2,3,3,3) : null,
+                      child: const Icon(Icons.arrow_upward),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      onPressed:
+                          _isConnected ? () => _sendCommand(1,2,3,3,3) : null,
+                      child: const Icon(Icons.arrow_back),
+                    ),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed:
+                          _isConnected ? () => _sendCommand(1,2,3,3,3) : null,
+                      child: const Icon(Icons.arrow_downward),
+                    ),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed:
+                          _isConnected ? () => _sendCommand(1,2,3,4,5) : null,
+                      child: const Icon(Icons.arrow_forward),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      onPressed:
+                          _isConnected ? () => _sendCommand(1,2,3,3,3) : null,
+                      child: const Text("STOP ACTION - BALANCE"),
+                    ),
+                  ],
+                ), 
                 
 
                 Column(
@@ -315,7 +358,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         num2 = double.tryParse(myController2.text) ?? 0;
                         num3 = double.tryParse(myController3.text) ?? 0;
                         if(_isConnected){
-                          _sendCommand(_x, _y, num1, num2, num3);
+                          _sendCommand(0, 0, num1, num2, num3);
                         }
                         
                       },
