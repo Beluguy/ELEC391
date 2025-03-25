@@ -273,45 +273,71 @@ class _MyHomePageState extends State<MyHomePage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                  SizedBox(
+                    width: 100,
+                    height:100,
+                    child: 
                     ElevatedButton(
                       onPressed:
                           _isConnected ? () => _sendCommand(1,2,3,3,3) : null,
                       child: const Icon(Icons.arrow_upward),
                     ),
+                  )
+                    
                   ],
                 ),
                 const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ElevatedButton(
-                      onPressed:
-                          _isConnected ? () => _sendCommand(1,2,3,3,3) : null,
-                      child: const Icon(Icons.arrow_back),
-                    ),
+                    SizedBox(
+                      width: 100,
+                      height:100,
+                      child: 
+                      ElevatedButton(
+                        onPressed:
+                            _isConnected ? () => _sendCommand(1,2,3,3,3) : null,
+                        child: const Icon(Icons.arrow_back),
+                      ),
+                   ),
+                   const SizedBox(width: 10),
+                    SizedBox(
+                      width: 100,
+                      height:100,
+                      child: 
+                      ElevatedButton(
+                        onPressed:
+                            _isConnected ? () => _sendCommand(1,2,3,3,3) : null,
+                        child: const Icon(Icons.stop_outlined),
+                      ),
+                   ),
                     const SizedBox(width: 10),
-                    ElevatedButton(
-                      onPressed:
-                          _isConnected ? () => _sendCommand(1,2,3,3,3) : null,
-                      child: const Icon(Icons.arrow_downward),
-                    ),
-                    const SizedBox(width: 10),
-                    ElevatedButton(
-                      onPressed:
-                          _isConnected ? () => _sendCommand(1,2,3,4,5) : null,
-                      child: const Icon(Icons.arrow_forward),
-                    ),
+                    SizedBox(
+                      width: 100,
+                      height:100,
+                      child: 
+                      ElevatedButton(
+                        onPressed:
+                            _isConnected ? () => _sendCommand(1,2,3,3,3) : null,
+                        child: const Icon(Icons.arrow_forward),
+                      ),
+                   ),
                   ],
                 ),
                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ElevatedButton(
-                      onPressed:
-                          _isConnected ? () => _sendCommand(1,2,3,3,3) : null,
-                      child: const Text("STOP ACTION - BALANCE"),
-                    ),
+                    SizedBox(
+                      width: 100,
+                      height: 100,
+                      child: 
+                      ElevatedButton(
+                        onPressed:
+                            _isConnected ? () => _sendCommand(1,2,3,3,3) : null,
+                        child: const Icon(Icons.arrow_downward),
+                      ),
+                   ),
                   ],
                 ), 
                 
