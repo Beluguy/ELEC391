@@ -1,8 +1,8 @@
 #include <ArduinoBLE.h>             // Bluetooth
 #include "Arduino_BMI270_BMM150.h"  // IMU
 #include "ArduPID.h"                // PID
-//#include <Wire.h>                   // I2C
-//#include <AS5600.h>                 // Encoder
+//#include <Wire.h>                 // I2C
+//#include <AS5600.h>               // Encoder
 #include "mbed.h"                   // Customer PWM freq
 
 #define BUFFER_SIZE 20
@@ -124,7 +124,7 @@ void loop() {
         double dt = (millis() - lastTime) / 1000.0;
         lastTime = millis();
         gyroAngle = gyroZ * dt + currentAngle;
-        // Serial.print(dt);
+        //Serial.println(dt);
 
         currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
         // Serial.print("Current Angle: ");
