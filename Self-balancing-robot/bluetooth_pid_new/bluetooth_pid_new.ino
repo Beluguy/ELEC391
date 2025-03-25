@@ -22,7 +22,7 @@ ArduPID myController;
 
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
-float kAcc = 0.1, kGyro = 0.9;
+float kAcc = 0.2, kGyro = 0.8;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
 
 // Define a custom BLE service and characteristic
@@ -71,6 +71,7 @@ void setup() {
   SampleRate = IMU.gyroscopeSampleRate();
   myController.begin(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd);
   myController.setOutputLimits(-255, 255);
+  //myController.setBias(22.0);
   myController.setWindUpLimits(-255, 255); // Groth bounds for the integral term to prevent integral wind-up
   myController.setSampleTime(10);
   myController.start();
@@ -127,12 +128,12 @@ void loop() {
         //Serial.println(dt);
 
         currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
-        // Serial.print("Current Angle: ");
-        // Serial.print(currentAngle);
-        // Serial.print("\t");
-        // Serial.print(gyroAngle);
-        // Serial.print("\t");
-        // Serial.print(accAngle);
+        //Serial.print("Current Angle: ");
+        Serial.print(currentAngle);
+        Serial.print("\t");
+        Serial.print(gyroAngle);
+        Serial.print("\t");
+        Serial.println(accAngle);
         }
       //-----------------------------------------------------------
 
@@ -149,33 +150,33 @@ void loop() {
       //   speedFactorOver = 1;
       // }
 
-      if (currentAngle > (targetAngle)) {
-        // M1FPin.write(1.0);
-        // M1BPin.write(1.0 - speed);
-        // M2FPin.write(1.0);
-        // M2BPin.write(1.0 - speed);
-        M1FPin.write(speed);
-        M1BPin.write(0.0);
-        M2FPin.write(speed);
-        M2BPin.write(0.0);
-      } else if (currentAngle < (targetAngle))  {
-        // M1FPin.write(1.0 - speed);
-        // M1BPin.write(1.0);
-        // M2FPin.write(1.0 - speed);
-        // M2BPin.write(1.0);
-        M1FPin.write(0.0);
-        M1BPin.write(speed);
-        M2FPin.write(0.0);
-        M2BPin.write(speed);
+      if (currentAngle > (targetAngle + 0.5)) {
+        M1FPin.write(1.0);
+        M1BPin.write(1.0 - speed);
+        M2FPin.write(1.0);
+        M2BPin.write(1.0 - speed);
+        // M1FPin.write(speed);
+        // M1BPin.write(0.0);
+        // M2FPin.write(speed);
+        // M2BPin.write(0.0);
+      } else if (currentAngle < (targetAngle - 0.5))  {
+        M1FPin.write(1.0 - speed);
+        M1BPin.write(1.0);
+        M2FPin.write(1.0 - speed);
+        M2BPin.write(1.0);
+        // M1FPin.write(0.0);
+        // M1BPin.write(speed);
+        // M2FPin.write(0.0);
+        // M2BPin.write(speed);
       } else {
-        // M1FPin.write(1.0);
-        // M1BPin.write(1.0);
-        // M2FPin.write(1.0);
-        // M2BPin.write(1.0);
-        M1FPin.write(0.0);
-        M1BPin.write(0.0);
-        M2FPin.write(0.0);
-        M2BPin.write(0.0);
+        M1FPin.write(1.0);
+        M1BPin.write(1.0);
+        M2FPin.write(1.0);
+        M2BPin.write(1.0);
+        // M1FPin.write(0.0);
+        // M1BPin.write(0.0);
+        // M2FPin.write(0.0);
+        // M2BPin.write(0.0);
       }
       //----------------------------------------------------------
       // Serial.print(Kp);
@@ -184,7 +185,7 @@ void loop() {
       // Serial.print("\t");
       // Serial.print(Kd);
       // Serial.print("\t");
-      // Serial.println(speed);
+      //Serial.println(speed);
     }
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     //Serial.println("Disconnected from central.");

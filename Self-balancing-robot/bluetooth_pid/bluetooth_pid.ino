@@ -17,8 +17,8 @@ mbed::PwmOut M1BPin( digitalPinToPinName( M1B ) );
 mbed::PwmOut M2FPin( digitalPinToPinName( M2F ) );
 
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
-double currentAngle = 0.0, targetAngle = 0.3, PWM;
-float kAcc = 0.05, kGyro = 0.95;
+double currentAngle = 0.0, targetAngle = 0.0, PWM;
+float kAcc = 0.2, kGyro = 0.8;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
 
 //Specify the links and initial tuning parameters
@@ -29,7 +29,6 @@ BLEService customService("fc096266-ad93-482d-928c-c2560ea93a4e");
 BLECharacteristic customCharacteristic("9ff0183d-6d83-4d05-a10e-55c142bee2d1", BLERead | BLEWrite | BLENotify, BUFFER_SIZE, false);
 
 float turnCoeff, driveCoeff;
-
 
 
 void setup() {
@@ -156,55 +155,20 @@ void loop() {
 
       //Serial.println(speed);
       if (currentAngle > (targetAngle)) {
-        /*
-        analogWrite(M1F, 255);  
-        analogWrite(M1B, 255-speed);   
-        analogWrite(M2F, 255);  
-        analogWrite(M2B, 255-speed);
-        */
-        // M1FPin.write(1.0);
-        // M1BPin.write(1.0 - speed);
-        // M2FPin.write(1.0);
-        // M2BPin.write(1.0 - speed);
-        M1FPin.write(speed);
-        M1BPin.write(0.0);
-        M2FPin.write(speed);
-        M2BPin.write(0.0);
-        
+        M1FPin.write(1.0);
+        M1BPin.write(1.0 - speed);
+        M2FPin.write(1.0);
+        M2BPin.write(1.0 - speed);
       } else if (currentAngle < (targetAngle))  {
-        /*
-        analogWrite(M1F, 255-speed);    
-        analogWrite(M1B, 255);   
-        analogWrite(M2F, 255-speed);   
-        analogWrite(M2B, 255);
-        */
-
-        // M1FPin.write(1.0 - speed);
-        // M1BPin.write(1.0);
-        // M2FPin.write(1.0 - speed);
-        // M2BPin.write(1.0);
-
-        M1FPin.write(0.0);
-        M1BPin.write(speed);
-        M2FPin.write(0.0);
-        M2BPin.write(speed);
+        M1FPin.write(1.0 - speed);
+        M1BPin.write(1.0);
+        M2FPin.write(1.0 - speed);
+        M2BPin.write(1.0);
       } else {
-        /*
-        analogWrite(M1F, 255);    
-        analogWrite(M1B, 255);   
-        analogWrite(M2F, 255);   
-        analogWrite(M2B, 255);
-        */
-
-      // M1FPin.write(1.0);
-      // M1BPin.write(1.0);
-      // M2FPin.write(1.0);
-      // M2BPin.write(1.0);
-
-        M1FPin.write(0.0);
-        M1BPin.write(0.0);
-        M2FPin.write(0.0);
-        M2BPin.write(0.0);
+      M1FPin.write(1.0);
+      M1BPin.write(1.0);
+      M2FPin.write(1.0);
+      M2BPin.write(1.0);
       }
       //----------------------------------------------------------
     }

@@ -1,7 +1,7 @@
 #include "Arduino_BMI270_BMM150.h"
 #include "mbed.h"
-#include <Wire.h>
-#include <AS5600.h>
+//#include <Wire.h>
+//#include <AS5600.h>
 #include "ArduPID.h"
 ArduPID myController;
 
@@ -16,7 +16,7 @@ mbed::PwmOut M1FPin ( digitalPinToPinName( M1F ) );
 mbed::PwmOut M1BPin( digitalPinToPinName( M1B ) );
 mbed::PwmOut M2FPin( digitalPinToPinName( M2F ) );
 
-float Kp = 30.0, Ki = 0.0, Kd = 0.0;
+float Kp = 2.0, Ki = 0.0, Kd = 0.0;
 double currentAngle = 0.0, targetAngle = 0.0, PWM, accAngle, gyroAngle;
 float kAcc = 0.1, kGyro = 0.9;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, SampleRate;
@@ -101,5 +101,5 @@ void loop() {
     }
   //----------------------------------------------------------
   // Serial.print("\t");
-  // Serial.println(speed);
+  Serial.println(PWM);
 }
