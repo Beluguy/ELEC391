@@ -17,7 +17,7 @@ mbed::PwmOut M1BPin( digitalPinToPinName( M1B ) );
 mbed::PwmOut M2FPin( digitalPinToPinName( M2F ) );
 
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
-double currentAngle = 0.0, targetAngle = 0.5, PWM;
+double currentAngle = 0.0, targetAngle = 0.3, PWM;
 float kAcc = 0.05, kGyro = 0.95;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
 
@@ -129,11 +129,11 @@ void loop() {
 
         currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
         //Serial.print("Current Angle: ");
-        Serial.print(currentAngle);
-        Serial.print("\t");
-        Serial.print(gyroAngle);
-        Serial.print("\t");
-        Serial.println(accAngle);
+        //Serial.print(currentAngle);
+        //Serial.print("\t");
+        //Serial.print(gyroAngle);
+        //Serial.print("\t");
+        //Serial.println(accAngle);
         // Serial.println("\t");
         }
       //-----------------------------------------------------------
@@ -141,15 +141,18 @@ void loop() {
       //----------------------PID---------------------------------
       myPID.Compute();
       static float speed;
+      speed = abs(PWM)/255.0;
+      /*
       static float speedNew;
       static bool speedFactorOver;
 
-      speed = abs(PWM)/255.0;
+      
       speedNew = 1.05*speed;
 
-      if (speed*1.05 >= 1.0){
+      if (speedNew >= 1.0){
         speedFactorOver = 1;
       }
+      */
 
       //Serial.println(speed);
       if (currentAngle > (targetAngle)) {
@@ -163,18 +166,10 @@ void loop() {
         // M1BPin.write(1.0 - speed);
         // M2FPin.write(1.0);
         // M2BPin.write(1.0 - speed);
-        if(speedFactorOver){
-          M1FPin.write(speed);
-          M1BPin.write(0.0);
-          M2FPin.write(speed);
-          M2BPin.write(0.0);
-        } else {
-          M1FPin.write(speedNew);
-          M1BPin.write(0.0);
-          M2FPin.write(speedNew);
-          M2BPin.write(0.0);
-        }
-        
+        M1FPin.write(speed);
+        M1BPin.write(0.0);
+        M2FPin.write(speed);
+        M2BPin.write(0.0);
         
       } else if (currentAngle < (targetAngle))  {
         /*
@@ -230,5 +225,4 @@ void loop() {
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     //Serial.println("Disconnected from central.");
   }
-  //loopStartTime = micros();
 }
