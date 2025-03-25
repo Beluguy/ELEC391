@@ -140,17 +140,12 @@ void loop() {
       myPID.Compute();
       static float speed;
       speed = abs(PWM)/255.0;
-      /*
-      static float speedNew;
-      static bool speedFactorOver;
 
-      
-      speedNew = 1.05*speed;
-
-      if (speedNew >= 1.0){
-        speedFactorOver = 1;
+      if(speed <= 0.1){
+        speed = 0.1;
+      } else if (speed >= 0.9){
+        speed = 0.9;
       }
-      */
 
       Serial.println(speed);
       if (currentAngle > (targetAngle)) {
