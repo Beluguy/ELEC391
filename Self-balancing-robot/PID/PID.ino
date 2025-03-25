@@ -23,11 +23,6 @@ float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
 //Specify the links and initial tuning parameters
 PID myPID(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd, DIRECT);
 
-// unsigned long loopStartTime;
-// unsigned long loopTime;
-// unsigned long maxTime = 0;
-// unsigned long minTime = 1000000; // Initialize with a large value
-
 void setup() {
   Serial.begin(9600);
   //while (!Serial);
@@ -51,8 +46,6 @@ void setup() {
 }
 
 void loop() {
-  //loopStartTime = micros();
-
   //----------------complementary filter------------------------
   if (IMU.gyroscopeAvailable() && IMU.accelerationAvailable()) {
     IMU.readAcceleration(accX, accY, accZ);
@@ -66,7 +59,7 @@ void loop() {
     Serial.println(dt);
 
     currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
-    //Serial.print("Current Angle: ");
+    // Serial.print("Current Angle: ");
     Serial.println(currentAngle);
     // Serial.print("\t");
     // Serial.print(gyroAngle);
@@ -99,17 +92,4 @@ void loop() {
 
   //---------------------Calculate loop time--------------------
   //Serial.println(speed);
-  /*
-  loopTime = micros() - loopStartTime;
-
-  if (loopTime > maxTime) maxTime = loopTime;
-  if (loopTime < minTime) minTime = loopTime;
-
-<<<<<<< HEAD
-  Serial.println(loopTime);
-  Serial.print("\t");
-  Serial.print(minTime);
-  Serial.print("\t");
-  Serial.println(maxTime);
-  */
 }
