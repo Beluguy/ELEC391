@@ -18,7 +18,7 @@ mbed::PwmOut M2FPin( digitalPinToPinName( M2F ) );
 
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
-float kAcc = 0.2, kGyro = 0.8;
+float kAcc = 0.1, kGyro = 0.9;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
 
 //Specify the links and initial tuning parameters
@@ -67,7 +67,7 @@ void setup() {
     //Serial.println("Failed to initialize IMU!");
     while (1);
   }
-  SampleRate = IMU.gyroscopeSampleRate();
+  //SampleRate = IMU.gyroscopeSampleRate();
   myPID.SetOutputLimits(-255, 255);
   myPID.SetSampleTime(1);
   myPID.SetMode(AUTOMATIC);
@@ -108,7 +108,6 @@ void loop() {
           memcpy(&Kp, data, 4); // Extract third float
           memcpy(&Ki, data + 4, 4); // Extract fourth float
           memcpy(&Kd, data + 8, 4); // Extract fifth float
-          
           myPID.SetTunings(Kp, Ki, Kd);
         }
       }
@@ -117,23 +116,23 @@ void loop() {
       //----------------complementary filter------------------------
       if (IMU.gyroscopeAvailable() && IMU.accelerationAvailable()) {
         IMU.readAcceleration(accX, accY, accZ);
-        accAngle = RAD_TO_DEG*(accY/accZ);
+        accAngle = RAD_TO_DEG*atan(accY/accZ);
 
         IMU.readGyroscope(gyroX, gyroY, gyroZ);
         static double lastTime = millis();
         double dt = (millis() - lastTime) / 1000.0;
         lastTime = millis();
         gyroAngle = gyroZ * dt + currentAngle;
-        Serial.println(dt);
+        //Serial.println(dt);
 
         currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
-        //Serial.print("Current Angle: ");
-        //Serial.print(currentAngle);
-        //Serial.print("\t");
-        //Serial.print(gyroAngle);
-        //Serial.print("\t");
-        //Serial.println(accAngle);
-        // Serial.println("\t");
+        // Serial.print("Current Angle: ");
+        // Serial.print(currentAngle);
+        // Serial.print("\tgyroAngle: ");
+        // Serial.print(gyroAngle);
+        // Serial.print("\taccAngle: ");
+        // Serial.print(accAngle);
+        // Serial.print("\t");
         }
       //-----------------------------------------------------------
 
@@ -153,7 +152,7 @@ void loop() {
       }
       */
 
-      //Serial.println(speed);
+      Serial.println(speed);
       if (currentAngle > (targetAngle)) {
         M1FPin.write(1.0);
         M1BPin.write(1.0 - speed);
@@ -165,12 +164,20 @@ void loop() {
         M2FPin.write(1.0 - speed);
         M2BPin.write(1.0);
       } else {
-      M1FPin.write(1.0);
-      M1BPin.write(1.0);
-      M2FPin.write(1.0);
-      M2BPin.write(1.0);
+        M1FPin.write(1.0);
+        M1BPin.write(1.0);
+        M2FPin.write(1.0);
+        M2BPin.write(1.0);
       }
       //----------------------------------------------------------
+      // Serial.print("Kp: ");
+      // Serial.print(Kp);
+      // Serial.print("\tKi: ");
+      // Serial.print(Ki);
+      // Serial.print("\tkd: ");
+      // Serial.print(Kd);
+      // Serial.println("\t");
+      //Serial.println(speed);
     }
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     //Serial.println("Disconnected from central.");
