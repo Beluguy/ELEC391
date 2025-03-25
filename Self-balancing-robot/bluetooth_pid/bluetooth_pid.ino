@@ -6,10 +6,10 @@
 #define BUFFER_SIZE 20
 #define PWM_FREQ 10000.0
 
-#define M2B D10 //yellow: motor 2
-#define M1F D9  //white:  motor 1
-#define M1B D8  //green:  motor 1
-#define M2F D7  //blue:   motor 2
+#define M1B D10 //Green: motor 1
+#define M1F D9  //Blue:  motor 1
+#define M2B D8  //Green: motor 2
+#define M2F D7  //Blue:  motor 2
 
 mbed::PwmOut M2BPin( digitalPinToPinName( M2B ) );
 mbed::PwmOut M1FPin ( digitalPinToPinName( M1F ) );
