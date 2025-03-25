@@ -10,6 +10,8 @@
 #define M1F D9  //Blue:  motor 1
 #define M2B D8  //Green: motor 2
 #define M2F D7  //Blue:  motor 2
+#define EF A0  //From ESP
+#define EB A1  //From ESP
 
 mbed::PwmOut M2BPin( digitalPinToPinName( M2B ) );
 mbed::PwmOut M1FPin ( digitalPinToPinName( M1F ) );
@@ -74,6 +76,10 @@ void setup() {
   pinMode(M1B, OUTPUT);
   pinMode(M2F, OUTPUT);
   pinMode(M2B, OUTPUT);
+
+  pinMode(EF, INPUT);
+  pinMode(EB, INPUT); 
+
   M2BPin.period(1.0/PWM_FREQ);
   M1FPin.period(1.0/PWM_FREQ);
   M1BPin.period(1.0/PWM_FREQ);
@@ -100,13 +106,8 @@ void loop() {
         if (length == 12) { // Expecting 20 bytes (5 floats)
           static uint8_t data[12];
           customCharacteristic.readValue(data, length);
-
-          //memcpy(&turnCoeff, data, 4);  // Extract first float
-          //memcpy(&driveCoeff, data + 4, 4); // Extract second float
-          memcpy(&Kp, data, 4); // Extract third float
-          memcpy(&Ki, data + 4, 4); // Extract fourth float
-          memcpy(&Kd, data + 8, 4); // Extract fifth float
-          myPID.SetTunings(Kp, Ki, Kd);
+          memcpy(&turnCoeff, data, 4);  // Extract first float
+          memcpy(&driveCoeff, data + 4, 4); // Extract second float
         }
       }
       //----------------------------------------------------------------------------------
@@ -145,7 +146,6 @@ void loop() {
         speed = 0.9;
       }
 
-      Serial.println(speed);
       if (currentAngle > (targetAngle)) {
         M1FPin.write(1.0);
         M1BPin.write(1.0 - speed);
@@ -163,6 +163,12 @@ void loop() {
         M2BPin.write(1.0);
       }
       //----------------------------------------------------------
+
+      //-------------------comm b/w esp & arduino-------------------
+      if (digitalRead(EF)) targetAngle = 1.0;
+      else if (digitalRead(EB)) targetAngle = -1.0;
+      else targetAngle = 0.0;
+      //-----------------------------------------------------------
       // Serial.print("Kp: ");
       // Serial.print(Kp);
       // Serial.print("\tKi: ");
