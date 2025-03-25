@@ -16,10 +16,10 @@ mbed::PwmOut M1FPin ( digitalPinToPinName( M1F ) );
 mbed::PwmOut M1BPin( digitalPinToPinName( M1B ) );
 mbed::PwmOut M2FPin( digitalPinToPinName( M2F ) );
 
-float Kp = 10.0, Ki = 0.0, Kd = 0.0;
-double currentAngle = 0.0, targetAngle = 0.0, PWM = 0.0;
+float Kp = 20.0, Ki = 0.0, Kd = 0.0;
+double currentAngle = 0.0, targetAngle = 0.0, PWM, accAngle, gyroAngle;
 float kAcc = 0.1, kGyro = 0.9;
-float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
+float accX, accY, accZ, gyroX, gyroY, gyroZ, SampleRate;
 
 void setup() {
   Serial.begin(9600);
@@ -31,7 +31,7 @@ void setup() {
   SampleRate = IMU.gyroscopeSampleRate();
   myController.begin(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd);   //Specify the links and initial tuning parameters
   myController.setOutputLimits(-255.0, 255.0);
-  myController.setSampleTime(1);
+  myController.setSampleTime(10);
   myController.start();
 
   pinMode(M1F, OUTPUT);
@@ -45,7 +45,6 @@ void setup() {
 }
 
 void loop() {
-  //loopStartTime = micros();
   //----------------complementary filter------------------------
   if (IMU.gyroscopeAvailable() && IMU.accelerationAvailable()) {
     IMU.readAcceleration(accX, accY, accZ);
@@ -57,8 +56,8 @@ void loop() {
     lastTime = millis();
     gyroAngle = gyroZ * dt + currentAngle;
 
-    currentAngle = kGyro*(gyroAngle + currentAngle) + kAcc*(accAngle);
-    Serial.print("Current Angle: ");
+    currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
+    // Serial.print("Current Angle: ");
     Serial.print(currentAngle);
     Serial.print("\t");
     Serial.print(gyroAngle);
@@ -69,7 +68,7 @@ void loop() {
 
   //----------------------PID---------------------------------
     myController.compute();
-    int speed = abs(PWM);
+    static float speed = abs(PWM)/255.0;
     if (currentAngle > targetAngle) {
       M1FPin.write(speed);
       M1BPin.write(0.0);
@@ -87,18 +86,6 @@ void loop() {
       M2BPin.write(0.0);
     }
   //----------------------------------------------------------
+  Serial.print("\t");
   Serial.println(speed);
-  //---------------------Calculate loop time--------------------
-  //Serial.println(speed);
-  //loopTime = micros() - loopStartTime;
-
-  //if (loopTime > maxTime) maxTime = loopTime;
-  //if (loopTime < minTime) minTime = loopTime;
-
-  //Serial.println(loopTime);
-  // Serial.print("\t");
-  // Serial.print(minTime);
-  // Serial.print("\t");
-  // Serial.println(maxTime);
-  //---------------------------------------------------------------
 }
