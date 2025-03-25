@@ -13,10 +13,10 @@
 #define EF A0  //From ESP
 #define EB A1  //From ESP
 
-mbed::PwmOut M2BPin( digitalPinToPinName( M2B ) );
-mbed::PwmOut M1FPin ( digitalPinToPinName( M1F ) );
-mbed::PwmOut M1BPin( digitalPinToPinName( M1B ) );
-mbed::PwmOut M2FPin( digitalPinToPinName( M2F ) );
+mbed::PwmOut M2BPin(digitalPinToPinName(M1B));
+mbed::PwmOut M1FPin(digitalPinToPinName(M1F));
+mbed::PwmOut M1BPin(digitalPinToPinName(M2B));
+mbed::PwmOut M2FPin(digitalPinToPinName(M2F));
 
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
@@ -106,7 +106,7 @@ void loop() {
         if (length == 12) { // Expecting 20 bytes (5 floats)
           static uint8_t data[12];
           customCharacteristic.readValue(data, length);
-          memcpy(&turnCoeff, data, 4);  // Extract first float
+          memcpy(&turnCoeff, data, 4);       // Extract first float
           memcpy(&driveCoeff, data + 4, 4); // Extract second float
         }
       }
