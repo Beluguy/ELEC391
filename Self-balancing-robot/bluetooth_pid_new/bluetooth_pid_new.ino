@@ -21,7 +21,7 @@ mbed::PwmOut M2FPin( digitalPinToPinName( M2F ) );
 ArduPID myController;
 
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
-double currentAngle = 0.0, targetAngle = 0.5, PWM;
+double currentAngle = 0.0, targetAngle = 0.0, PWM;
 float kAcc = 0.1, kGyro = 0.9;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
 
