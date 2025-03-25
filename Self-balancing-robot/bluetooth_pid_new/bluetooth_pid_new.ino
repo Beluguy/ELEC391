@@ -18,11 +18,11 @@ mbed::PwmOut M1FPin ( digitalPinToPinName( M1F ) );
 mbed::PwmOut M1BPin( digitalPinToPinName( M1B ) );
 mbed::PwmOut M2FPin( digitalPinToPinName( M2F ) );
 
-ArduPID myPID;
+ArduPID myController;
 
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
 double currentAngle = 0.0, targetAngle = 0.5, PWM;
-float kAcc = 0.05, kGyro = 0.95;
+float kAcc = 0.1, kGyro = 0.9;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
 
 // Define a custom BLE service and characteristic
@@ -69,8 +69,10 @@ void setup() {
     while (1);
   }
   SampleRate = IMU.gyroscopeSampleRate();
-  myPID.etOutputLimits(-255, 255);
-  myPID.SetSampleTime(1);
+  myController.begin(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd);
+  myController.setOutputLimits(-255, 255);
+  myController.setWindUpLimits(-255, 255); // Groth bounds for the integral term to prevent integral wind-up
+  myController.setSampleTime(10);
   myController.start();
 
   pinMode(M1F, OUTPUT);
@@ -102,14 +104,12 @@ void loop() {
         if (length == 12) { // Expecting 20 bytes (5 floats)
           static uint8_t data[12];
           customCharacteristic.readValue(data, length);
-
           //memcpy(&turnCoeff, data, 4);  // Extract first float
           //memcpy(&driveCoeff, data + 4, 4); // Extract second float
           memcpy(&Kp, data, 4); // Extract third float
           memcpy(&Ki, data + 4, 4); // Extract fourth float
           memcpy(&Kd, data + 8, 4); // Extract fifth float
-          
-          myPID.setTunings(Kp, Ki, Kd);
+          myController.setCoefficients(Kp, Ki, Kd);
         }
       }
       //----------------------------------------------------------------------------------
@@ -124,21 +124,21 @@ void loop() {
         double dt = (millis() - lastTime) / 1000.0;
         lastTime = millis();
         gyroAngle = gyroZ * dt + currentAngle;
-        Serial.print(dt);
+        // Serial.print(dt);
 
         currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
-        //Serial.print("Current Angle: ");
-        Serial.print(currentAngle);
-        Serial.print("\t");
-        Serial.print(gyroAngle);
-        Serial.print("\t");
-        Serial.println(accAngle);
+        // Serial.print("Current Angle: ");
+        // Serial.print(currentAngle);
+        // Serial.print("\t");
+        // Serial.print(gyroAngle);
+        // Serial.print("\t");
+        // Serial.print(accAngle);
         }
       //-----------------------------------------------------------
 
       //----------------------PID---------------------------------
-      myPID.compute();
-      int speed = abs(PWM);
+      myController.compute();
+      float speed = abs(PWM)/255.0;
       // static float speedNew;
       // static bool speedFactorOver;
 
@@ -149,7 +149,6 @@ void loop() {
       //   speedFactorOver = 1;
       // }
 
-      //Serial.println(speed);
       if (currentAngle > (targetAngle)) {
         // M1FPin.write(1.0);
         // M1BPin.write(1.0 - speed);
@@ -179,7 +178,13 @@ void loop() {
         M2BPin.write(0.0);
       }
       //----------------------------------------------------------
-      Serial.println(speed);
+      // Serial.print(Kp);
+      // Serial.print("\t");
+      // Serial.print(Ki);
+      // Serial.print("\t");
+      // Serial.print(Kd);
+      // Serial.print("\t");
+      // Serial.println(speed);
     }
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     //Serial.println("Disconnected from central.");

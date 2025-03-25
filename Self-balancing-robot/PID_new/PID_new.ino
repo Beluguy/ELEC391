@@ -16,7 +16,7 @@ mbed::PwmOut M1FPin ( digitalPinToPinName( M1F ) );
 mbed::PwmOut M1BPin( digitalPinToPinName( M1B ) );
 mbed::PwmOut M2FPin( digitalPinToPinName( M2F ) );
 
-float Kp = 20.0, Ki = 0.0, Kd = 0.0;
+float Kp = 30.0, Ki = 0.0, Kd = 0.0;
 double currentAngle = 0.0, targetAngle = 0.0, PWM, accAngle, gyroAngle;
 float kAcc = 0.1, kGyro = 0.9;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, SampleRate;
@@ -58,34 +58,48 @@ void loop() {
 
     currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
     // Serial.print("Current Angle: ");
-    Serial.print(currentAngle);
-    Serial.print("\t");
-    Serial.print(gyroAngle);
-    Serial.print("\t");
-    Serial.print(accAngle);
+    // Serial.print(currentAngle);
+    // Serial.print("\t");
+    // Serial.print(gyroAngle);
+    // Serial.print("\t");
+    // Serial.print(accAngle);
     }
   //-----------------------------------------------------------
 
   //----------------------PID---------------------------------
     myController.compute();
-    static float speed = abs(PWM)/255.0;
+    float speed = abs(PWM)/255.0;
+
     if (currentAngle > targetAngle) {
-      M1FPin.write(speed);
-      M1BPin.write(0.0);
-      M2FPin.write(speed);
-      M2BPin.write(0.0);
+      M1FPin.write(1.0);
+      M1BPin.write(1.0 - speed);
+      M2FPin.write(1.0);
+      M2BPin.write(1.0 - speed);
+
+      // M1FPin.write(speed);
+      // M1BPin.write(0.0);
+      // M2FPin.write(speed);
+      // M2BPin.write(0.0);
     } else if (currentAngle < targetAngle)  {
-      M1FPin.write(0.0);
-      M1BPin.write(speed);
-      M2FPin.write(0.0);
-      M2BPin.write(speed);
+      M1FPin.write(1.0 - speed);
+      M1BPin.write(1.0);
+      M2FPin.write(1.0 - speed);
+      M2BPin.write(1.0);
+      // M1FPin.write(0.0);
+      // M1BPin.write(speed);
+      // M2FPin.write(0.0);
+      // M2BPin.write(speed);
     } else {
-      M1FPin.write(0.0);
-      M1BPin.write(0.0);
-      M2FPin.write(0.0);
-      M2BPin.write(0.0);
+      M1FPin.write(1.0);
+      M1BPin.write(1.0);
+      M2FPin.write(1.0);
+      M2BPin.write(1.0);
+      // M1FPin.write(0.0);
+      // M1BPin.write(0.0);
+      // M2FPin.write(0.0);
+      // M2BPin.write(0.0);
     }
   //----------------------------------------------------------
-  Serial.print("\t");
-  Serial.println(speed);
+  // Serial.print("\t");
+  // Serial.println(speed);
 }
