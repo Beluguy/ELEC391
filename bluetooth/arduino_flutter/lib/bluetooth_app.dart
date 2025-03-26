@@ -164,15 +164,16 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  Future<void> _sendCommand(double turn, double forward, double p, double i, double d) async {
+  Future<void> _sendCommand(int turnCommand, double p, double i, double d) async {
     
     if (_writeCharacteristic != null) {
-        final ByteData data = ByteData(12);
+        final ByteData data = ByteData(1);
         //data.setFloat32(0, turn, Endian.little); // First 4 bytes: X-coordinate
         //data.setFloat32(4, forward, Endian.little); // Next 4 bytes: Y-coordinate
-        data.setFloat32(0, p, Endian.little); // Next 4 bytes: p
-        data.setFloat32(4, i, Endian.little); // Next 4 bytes: i
-        data.setFloat32(8, d, Endian.little); // Next 4 bytes: d
+        data.setInt8(0, turnCommand);
+        //data.setFloat32(0, p, Endian.little); // Next 4 bytes: p
+        //data.setFloat32(4, i, Endian.little); // Next 4 bytes: i
+        //data.setFloat32(8, d, Endian.little); // Next 4 bytes: d
 
         final List<int> sendData = data.buffer.asUint8List();
       try {
@@ -270,7 +271,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 Text('Y: $_y'),
                 */
 
-                /*
+                
                 // Joystick Buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -281,7 +282,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: 
                     ElevatedButton(
                       onPressed:
-                          _isConnected ? () => _sendCommand(1,2,3,3,3) : null,
+                          _isConnected ? () => _sendCommand(1,2,3,3) : null,
                       child: const Icon(Icons.arrow_upward),
                     ),
                   )
@@ -298,7 +299,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: 
                       ElevatedButton(
                         onPressed:
-                            _isConnected ? () => _sendCommand(1,2,3,3,3) : null,
+                            _isConnected ? () => _sendCommand(2,2,3,3) : null,
                         child: const Icon(Icons.arrow_back),
                       ),
                    ),
@@ -309,7 +310,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: 
                       ElevatedButton(
                         onPressed:
-                            _isConnected ? () => _sendCommand(1,2,3,3,3) : null,
+                            _isConnected ? () => _sendCommand(0,2,3,3) : null,
                         child: const Icon(Icons.stop_outlined),
                       ),
                    ),
@@ -320,7 +321,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: 
                       ElevatedButton(
                         onPressed:
-                            _isConnected ? () => _sendCommand(1,2,3,3,3) : null,
+                            _isConnected ? () => _sendCommand(3,2,3,3) : null,
                         child: const Icon(Icons.arrow_forward),
                       ),
                    ),
@@ -336,14 +337,15 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: 
                       ElevatedButton(
                         onPressed:
-                            _isConnected ? () => _sendCommand(1,2,3,3,3) : null,
+                            _isConnected ? () => _sendCommand(-1,2,3,3) : null,
                         child: const Icon(Icons.arrow_downward),
                       ),
                    ),
                   ],
                 ), 
-                */
+                
 
+                /*
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -407,6 +409,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     */
                   ],
                 ),
+                */
                 
                 
               ],
