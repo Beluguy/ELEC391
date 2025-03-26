@@ -11,10 +11,10 @@
 #define M2B D8  //Green: motor 2
 #define M2F D7  //Blue:  motor 2
 
-mbed::PwmOut M2BPin( digitalPinToPinName( M2B ) );
-mbed::PwmOut M1FPin ( digitalPinToPinName( M1F ) );
-mbed::PwmOut M1BPin( digitalPinToPinName( M1B ) );
-mbed::PwmOut M2FPin( digitalPinToPinName( M2F ) );
+mbed::PwmOut M2BPin(digitalPinToPinName(M1B));
+mbed::PwmOut M1FPin(digitalPinToPinName(M1F));
+mbed::PwmOut M1BPin(digitalPinToPinName(M2B));
+mbed::PwmOut M2FPin(digitalPinToPinName(M2F));
 
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
@@ -81,8 +81,7 @@ void setup() {
 }
 
 void loop() {
-  
-  //----------------------------ble----------------------------------------
+//----------------------------ble----------------------------------------
   // Wait for a BLE central to connect
   BLEDevice central = BLE.central();
 
@@ -175,4 +174,5 @@ void loop() {
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     //Serial.println("Disconnected from central.");
   }
+//---------------------------------------------------------------------------
 }
