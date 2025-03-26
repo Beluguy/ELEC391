@@ -167,13 +167,13 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _sendCommand(int turnCommand, double p, double i, double d) async {
     
     if (_writeCharacteristic != null) {
-        final ByteData data = ByteData(1);
+        final ByteData data = ByteData(13);
         //data.setFloat32(0, turn, Endian.little); // First 4 bytes: X-coordinate
         //data.setFloat32(4, forward, Endian.little); // Next 4 bytes: Y-coordinate
         data.setInt8(0, turnCommand);
-        //data.setFloat32(0, p, Endian.little); // Next 4 bytes: p
-        //data.setFloat32(4, i, Endian.little); // Next 4 bytes: i
-        //data.setFloat32(8, d, Endian.little); // Next 4 bytes: d
+        data.setFloat32(0, p, Endian.little); // Next 4 bytes: p
+        data.setFloat32(4, i, Endian.little); // Next 4 bytes: i
+        data.setFloat32(8, d, Endian.little); // Next 4 bytes: d
 
         final List<int> sendData = data.buffer.asUint8List();
       try {
@@ -277,12 +277,12 @@ class _MyHomePageState extends State<MyHomePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                   SizedBox(
-                    width: 100,
-                    height:100,
+                    width: 40,
+                    height: 40,
                     child: 
                     ElevatedButton(
                       onPressed:
-                          _isConnected ? () => _sendCommand(1,2,3,3) : null,
+                          _isConnected ? () => _sendCommand(1,num1,num2,num3) : null,
                       child: const Icon(Icons.arrow_upward),
                     ),
                   )
@@ -294,34 +294,34 @@ class _MyHomePageState extends State<MyHomePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     SizedBox(
-                      width: 100,
-                      height:100,
+                      width: 40,
+                      height:40,
                       child: 
                       ElevatedButton(
                         onPressed:
-                            _isConnected ? () => _sendCommand(2,2,3,3) : null,
+                            _isConnected ? () => _sendCommand(2,num1,num2,num3) : null,
                         child: const Icon(Icons.arrow_back),
                       ),
                    ),
                    const SizedBox(width: 10),
                     SizedBox(
-                      width: 100,
-                      height:100,
+                      width: 40,
+                      height:40,
                       child: 
                       ElevatedButton(
                         onPressed:
-                            _isConnected ? () => _sendCommand(0,2,3,3) : null,
+                            _isConnected ? () => _sendCommand(0,num1,num2,num3) : null,
                         child: const Icon(Icons.stop_outlined),
                       ),
                    ),
                     const SizedBox(width: 10),
                     SizedBox(
-                      width: 100,
-                      height:100,
+                      width: 40,
+                      height:40,
                       child: 
                       ElevatedButton(
                         onPressed:
-                            _isConnected ? () => _sendCommand(3,2,3,3) : null,
+                            _isConnected ? () => _sendCommand(3,num1,num2,num3) : null,
                         child: const Icon(Icons.arrow_forward),
                       ),
                    ),
@@ -332,12 +332,12 @@ class _MyHomePageState extends State<MyHomePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     SizedBox(
-                      width: 100,
-                      height: 100,
+                      width: 40,
+                      height: 40,
                       child: 
                       ElevatedButton(
                         onPressed:
-                            _isConnected ? () => _sendCommand(-1,2,3,3) : null,
+                            _isConnected ? () => _sendCommand(4,num1,num2,num3) : null,
                         child: const Icon(Icons.arrow_downward),
                       ),
                    ),
@@ -345,7 +345,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ), 
                 
 
-                /*
+                
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -360,7 +360,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       keyboardType: TextInputType.number,
  
                      ),
-                     SizedBox(height: 20),
+                     SizedBox(height: 5),
  
                      TextFormField(
  
@@ -368,7 +368,7 @@ class _MyHomePageState extends State<MyHomePage> {
                        keyboardType: TextInputType.number,
  
                      ),
-                     SizedBox(height: 20),
+                     SizedBox(height: 5),
  
                      TextFormField(
  
@@ -376,7 +376,7 @@ class _MyHomePageState extends State<MyHomePage> {
                        keyboardType: TextInputType.number,
  
                      ),
-                     SizedBox(height: 20),
+                     SizedBox(height: 5),
                     
                     ElevatedButton(
                       onPressed: (){
@@ -388,7 +388,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         num2 = double.tryParse(myController2.text) ?? 0;
                         num3 = double.tryParse(myController3.text) ?? 0;
                         if(_isConnected){
-                          _sendCommand(0, 0, num1, num2, num3);
+                          _sendCommand(0, num1, num2, num3);
                         }
                         
                       },
@@ -409,7 +409,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     */
                   ],
                 ),
-                */
+                
                 
                 
               ],
