@@ -1,7 +1,9 @@
-#include "Arduino_BMI270_BMM150.h"
-#include <ArduinoBLE.h>
-#include <PID_v1.h>
-#include "mbed.h"
+#include <ArduinoBLE.h>             // Bluetooth
+#include "Arduino_BMI270_BMM150.h"  // IMU
+#include "ArduPID.h"                // PID
+//#include <Wire.h>                 // I2C
+//#include <AS5600.h>               // Encoder
+#include "mbed.h"                   // Customer PWM freq
 
 #define BUFFER_SIZE 20
 #define PWM_FREQ 10000.0
@@ -16,17 +18,18 @@ mbed::PwmOut M1FPin(digitalPinToPinName(M1F));
 mbed::PwmOut M1BPin(digitalPinToPinName(M2B));
 mbed::PwmOut M2FPin(digitalPinToPinName(M2F));
 
+ArduPID myController;
+
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
 float kAcc = 0.1, kGyro = 0.9;
-float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
-
-//Specify the links and initial tuning parameters
-PID myPID(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd, DIRECT);
+float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle;
 
 // Define a custom BLE service and characteristic
 BLEService customService("fc096266-ad93-482d-928c-c2560ea93a4e");
 BLECharacteristic customCharacteristic("9ff0183d-6d83-4d05-a10e-55c142bee2d1", BLERead | BLEWrite | BLENotify, BUFFER_SIZE, false);
+
+float turnCoeff, driveCoeff;
 
 
 void setup() {
@@ -42,8 +45,8 @@ void setup() {
   }
 
   // Set the device name and local name
-  BLE.setLocalName("BLE-enjoyer");
-  BLE.setDeviceName("BLE-enjoyer");
+  BLE.setLocalName("BLE-DEVICE-A19");
+  BLE.setDeviceName("BLE-DEVICE-A19");
 
   // Add the characteristic to the service
   customService.addCharacteristic(customCharacteristic);
@@ -65,9 +68,12 @@ void setup() {
     //Serial.println("Failed to initialize IMU!");
     while (1);
   }
-  myPID.SetOutputLimits(-255, 255);
-  myPID.SetSampleTime(10);
-  myPID.SetMode(AUTOMATIC);
+  myController.begin(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd);
+  myController.setOutputLimits(-255, 255);
+  //myController.setBias(22.0);
+  myController.setWindUpLimits(-255, 255); // Groth bounds for the integral term to prevent integral wind-up
+  myController.setSampleTime(10);
+  myController.start();
 
   pinMode(M1F, OUTPUT);
   pinMode(M1B, OUTPUT);
@@ -80,7 +86,7 @@ void setup() {
 }
 
 void loop() {
-//----------------------------ble----------------------------------------
+  //----------------------------ble----------------------------------------
   // Wait for a BLE central to connect
   BLEDevice central = BLE.central();
 
@@ -102,7 +108,7 @@ void loop() {
           memcpy(&Kp, data+1, 4); // Extract third float
           memcpy(&Ki, data + 5, 4); // Extract fourth float
           memcpy(&Kd, data + 9, 4); // Extract fifth float
-          myPID.SetTunings(Kp, Ki, Kd);
+          myController.setCoefficients(Kp, Ki, Kd);
         }
       }
       //----------------------------------------------------------------------------------
@@ -110,7 +116,7 @@ void loop() {
       //----------------complementary filter------------------------
       if (IMU.gyroscopeAvailable() && IMU.accelerationAvailable()) {
         IMU.readAcceleration(accX, accY, accZ);
-        accAngle = RAD_TO_DEG*atan(accY/accZ) + 0.5;
+        accAngle = RAD_TO_DEG*(accY/accZ) + 0.5;
 
         IMU.readGyroscope(gyroX, gyroY, gyroZ);
         static double lastTime = millis();
@@ -120,18 +126,17 @@ void loop() {
         //Serial.println(dt);
 
         currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
-        Serial.print("Current Angle: ");
-        Serial.print(currentAngle);
-        Serial.print("\tgyroAngle: ");
-        Serial.print(gyroAngle);
-        Serial.print("\taccAngle: ");
-        Serial.print(accAngle);
-        Serial.print("\t");
+        //Serial.print("Current Angle: ");
+        // Serial.print(currentAngle);
+        // Serial.print("\t");
+        // Serial.print(gyroAngle);
+        // Serial.print("\t");
+        // Serial.println(accAngle);
         }
       //-----------------------------------------------------------
 
       //----------------------PID---------------------------------
-      myPID.Compute();
+      myController.compute();
       static float speed;
       speed = abs(PWM)/255.0;
 
@@ -143,29 +148,39 @@ void loop() {
         M1BPin.write(1.0 - speed);
         M2FPin.write(1.0);
         M2BPin.write(1.0 - speed);
+        // M1FPin.write(speed);
+        // M1BPin.write(0.0);
+        // M2FPin.write(speed);
+        // M2BPin.write(0.0);
       } else if (currentAngle < (targetAngle))  {
         M1FPin.write(1.0 - speed);
         M1BPin.write(1.0);
         M2FPin.write(1.0 - speed);
         M2BPin.write(1.0);
+        // M1FPin.write(0.0);
+        // M1BPin.write(speed);
+        // M2FPin.write(0.0);
+        // M2BPin.write(speed);
       } else {
         M1FPin.write(1.0);
         M1BPin.write(1.0);
         M2FPin.write(1.0);
         M2BPin.write(1.0);
+        // M1FPin.write(0.0);
+        // M1BPin.write(0.0);
+        // M2FPin.write(0.0);
+        // M2BPin.write(0.0);
       }
       //----------------------------------------------------------
-      // Serial.print("Kp: ");
       // Serial.print(Kp);
-      // Serial.print("\tKi: ");
+      // Serial.print("\t");
       // Serial.print(Ki);
-      // Serial.print("\tkd: ");
+      // Serial.print("\t");
       // Serial.print(Kd);
       // Serial.print("\t");
-      // Serial.println(speed);
+      //Serial.println(speed);
     }
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     //Serial.println("Disconnected from central.");
   }
-//---------------------------------------------------------------------------
 }
