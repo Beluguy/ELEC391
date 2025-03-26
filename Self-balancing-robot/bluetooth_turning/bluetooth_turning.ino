@@ -135,11 +135,12 @@ void loop() {
       myPID.Compute();
       static float speed;
       speed = abs(PWM)/255.0;
-      // if(speed <= 0.1){
-      //   speed = 0.1;
-      // } else if (speed >= 0.9){
-      //   speed = 0.9;
-      // }
+
+      float leftSpeed = speed + turnCoeff;
+      float rightSpeed = speed - turnCoeff;
+
+      if(speed <= 0.1) speed = 0.1;
+      else if (speed > 1.0) speed = 1.0;
 
       if (currentAngle > (targetAngle)) {
         M1FPin.write(1.0);
