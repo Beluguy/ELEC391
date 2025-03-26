@@ -6,7 +6,7 @@
 #include <AS5600.h>
 #include "speed.h"
 
-#define BUFFER_SIZE 20
+#define BUFFER_SIZE 1
 #define PWM_FREQ 10000.0
 
 #define M1B D10 //Green: motor 1 
@@ -105,10 +105,11 @@ void loop() {
       if (customCharacteristic.written()) {
         int length = customCharacteristic.valueLength();
         
-        if (length == 12) { // Expecting 20 bytes (5 floats)
-          static uint8_t data[12];
+        if (length == 1) { // Expecting 20 bytes (5 floats)
+          static uint8_t data[1];
           customCharacteristic.readValue(data, length);
-          memcpy(&turn, data, 4);       // Extract first float
+          memcpy(&turn, data, 1);       // Extract first float
+          Serial.print(turn);
         }
       }
       //----------------------------------------------------------------------------------
@@ -140,12 +141,18 @@ void loop() {
       myPID.Compute();
       static float speed, leftSpeed, rightSpeed;
       speed = abs(PWM)/255.0;
+
+      if (speed <= 0.1){
+        speed = 0.1;
+      } else if (speed >= 0.9){
+        speed = 0.9;
+      }
+
       //----------------------------------------------------------
 
       //-------------------comm b/w esp & arduino-------------------
       if (digitalRead(EF)) turn = 1;
-      else if (digitalRead(EB)) turn = -1;
-      else turn = 0;
+      if (digitalRead(EB)) turn = 4;
       //-----------------------------------------------------------
 
       //------------------------directions-------------------------
@@ -159,6 +166,19 @@ void loop() {
         leftSpeed = speed;
         rightSpeed = speed;
       }
+
+      if(leftSpeed <= 0.0){
+        leftSpeed = 0.0;
+      } else if (leftSpeed >= 1.0){
+        leftSpeed = 1.0;
+      }
+
+      if(rightSpeed <= 0.0){
+        rightSpeed = 0.0;
+      } else if (rightSpeed >= 1.0){
+        rightSpeed = 1.0;
+      }
+
 
       if (turn = 1){ // forward 
         if (currentAngle > (targetAngle + 1.0)) {
@@ -177,7 +197,7 @@ void loop() {
           M2FPin.write(1.0);
           M2BPin.write(1.0);
         }
-      } else if (turn = -1){ //backward 
+      } else if (turn = 4){ //backward 
         if (currentAngle > (targetAngle - 1.0)) {
           M1FPin.write(1.0);
           M1BPin.write(1.0 - leftSpeed);
@@ -255,6 +275,7 @@ void loop() {
       // Serial.print(Kd);
       // Serial.println("\t");
       // Serial.println(speed);
+      
     }
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     //Serial.println("Disconnected from central.");
