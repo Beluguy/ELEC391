@@ -90,7 +90,6 @@ void setup() {
 }
 
 void loop() {
-  
   //----------------------------ble----------------------------------------
   // Wait for a BLE central to connect
   BLEDevice central = BLE.central();
@@ -109,8 +108,7 @@ void loop() {
         if (length == 12) { // Expecting 20 bytes (5 floats)
           static uint8_t data[12];
           customCharacteristic.readValue(data, length);
-          memcpy(&turnCoeff, data, 4);       // Extract first float
-          memcpy(&driveCoeff, data + 4, 4); // Extract second float
+          memcpy(&turn, data, 4);       // Extract first float
         }
       }
       //----------------------------------------------------------------------------------
@@ -140,33 +138,38 @@ void loop() {
 
       //----------------------PID---------------------------------
       myPID.Compute();
-      static float speed;
+      static float speed, leftSpeed, rightSpeed;
       speed = abs(PWM)/255.0;
-
-      if(speed <= 0.1){
-        speed = 0.1;
-      } else if (speed >= 0.9){
-        speed = 0.9;
-      }
       //----------------------------------------------------------
 
       //-------------------comm b/w esp & arduino-------------------
       if (digitalRead(EF)) turn = 1;
-      else if (digitalRead(EB)) turn = 1;
+      else if (digitalRead(EB)) turn = -1;
       else turn = 0;
       //-----------------------------------------------------------
 
       //------------------------directions-------------------------
+      if (turn = 2){
+        leftSpeed = speed - 0.05;
+        rightSpeed = speed + 0.05;
+      } else if (turn = 3){
+        leftSpeed = speed - 0.05;
+        rightSpeed = speed + 0.05;
+      } else {
+        leftSpeed = speed;
+        rightSpeed = speed;
+      }
+
       if (turn = 1){ // forward 
         if (currentAngle > (targetAngle + 1.0)) {
           M1FPin.write(1.0);
-          M1BPin.write(1.0 - speed);
+          M1BPin.write(1.0 - leftSpeed);
           M2FPin.write(1.0);
-          M2BPin.write(1.0 - speed);
+          M2BPin.write(1.0 - rightSpeed);
         } else if (currentAngle < (targetAngle + 1.0)) {
-          M1FPin.write(1.0 - speed);
+          M1FPin.write(1.0 - leftSpeed);
           M1BPin.write(1.0);
-          M2FPin.write(1.0 - speed);
+          M2FPin.write(1.0 - rightSpeed);
           M2BPin.write(1.0);
         } else {
           M1FPin.write(1.0);
@@ -177,13 +180,13 @@ void loop() {
       } else if (turn = -1){ //backward 
         if (currentAngle > (targetAngle - 1.0)) {
           M1FPin.write(1.0);
-          M1BPin.write(1.0 - speed);
+          M1BPin.write(1.0 - leftSpeed);
           M2FPin.write(1.0);
-          M2BPin.write(1.0 - speed);
+          M2BPin.write(1.0 - rightSpeed);
         } else if (currentAngle < (targetAngle - 1.0)) {
-          M1FPin.write(1.0 - speed);
+          M1FPin.write(1.0 - leftSpeed);
           M1BPin.write(1.0);
-          M2FPin.write(1.0 - speed);
+          M2FPin.write(1.0 - rightSpeed);
           M2BPin.write(1.0);
         } else {
           M1FPin.write(1.0);
@@ -194,13 +197,13 @@ void loop() {
       } else if (turn = 2) { //left
           if (currentAngle > targetAngle) {
             M1FPin.write(1.0);
-            M1BPin.write(1.0 - speed);
+            M1BPin.write(1.0 - leftSpeed);
             M2FPin.write(1.0);
-            M2BPin.write(1.0 - speed);
+            M2BPin.write(1.0 - rightSpeed);
           } else if (currentAngle < targetAngle) {
-            M1FPin.write(1.0 - speed);
+            M1FPin.write(1.0 - leftSpeed);
             M1BPin.write(1.0);
-            M2FPin.write(1.0 - speed);
+            M2FPin.write(1.0 - rightSpeed);
             M2BPin.write(1.0);
           } else {
             M1FPin.write(1.0);
@@ -211,13 +214,13 @@ void loop() {
       } else if (turn = 3) { // right
         if (currentAngle > targetAngle){
           M1FPin.write(1.0);
-          M1BPin.write(1.0 - speed);
+          M1BPin.write(1.0 - leftSpeed);
           M2FPin.write(1.0);
           M2BPin.write(1.0 - speed);
         } else if (currentAngle < targetAngle){
-          M1FPin.write(1.0 - speed);
+          M1FPin.write(1.0 - leftSpeed);
           M1BPin.write(1.0);
-          M2FPin.write(1.0 - speed);
+          M2FPin.write(1.0 - rightSpeed);
           M2BPin.write(1.0);
         } else {
           M1FPin.write(1.0);
@@ -228,13 +231,13 @@ void loop() {
       } else { // stationary
         if (currentAngle > (targetAngle)){
           M1FPin.write(1.0);
-          M1BPin.write(1.0 - speed);
+          M1BPin.write(1.0 - leftSpeed);
           M2FPin.write(1.0);
-          M2BPin.write(1.0 - speed);
+          M2BPin.write(1.0 - rightSpeed);
         } else if (currentAngle < (targetAngle))  {
-          M1FPin.write(1.0 - speed);
+          M1FPin.write(1.0 - leftSpeed);
           M1BPin.write(1.0);
-          M2FPin.write(1.0 - speed);
+          M2FPin.write(1.0 - rightSpeed);
           M2BPin.write(1.0);
         } else {
           M1FPin.write(1.0);

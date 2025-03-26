@@ -136,6 +136,8 @@ void loop() {
       static float speed;
       speed = abs(PWM)/255.0;
 
+      if (turnCoeff = 1)
+
       float leftSpeed = speed + turnCoeff;
       float rightSpeed = speed - turnCoeff;
 
@@ -144,13 +146,13 @@ void loop() {
 
       if (currentAngle > (targetAngle)) {
         M1FPin.write(1.0);
-        M1BPin.write(1.0 - speed);
+        M1BPin.write(1.0 - leftSpeed);
         M2FPin.write(1.0);
-        M2BPin.write(1.0 - speed);
+        M2BPin.write(1.0 - rightSpeed);
       } else if (currentAngle < (targetAngle))  {
-        M1FPin.write(1.0 - speed);
+        M1FPin.write(1.0 - leftSpeed);
         M1BPin.write(1.0);
-        M2FPin.write(1.0 - speed);
+        M2FPin.write(1.0 - rightSpeed);
         M2BPin.write(1.0);
       } else {
         M1FPin.write(1.0);
