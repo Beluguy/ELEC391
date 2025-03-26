@@ -1,5 +1,3 @@
-#include <Wire.h>
-#include <AS5600.h>
 #include "Arduino_BMI270_BMM150.h"
 #include <PID_v1.h>
 #include "mbed.h"
