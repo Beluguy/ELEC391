@@ -1,17 +1,20 @@
-#include <ArduinoBLE.h>
 #include "Arduino_BMI270_BMM150.h"
+#include <ArduinoBLE.h>
 #include <PID_v1.h>
 #include "mbed.h"
+#include <Wire.h>
+#include <AS5600.h>
+#include "speed.h"
 
 #define BUFFER_SIZE 20
 #define PWM_FREQ 10000.0
 
-#define M1B D10 //Green: motor 1
+#define M1B D10 //Green: motor 1 
 #define M1F D9  //Blue:  motor 1
 #define M2B D8  //Green: motor 2
 #define M2F D7  //Blue:  motor 2
-#define EF A0  //From ESP
-#define EB A1  //From ESP
+#define EF A0   //From ESP
+#define EB A1   //From ESP
 
 mbed::PwmOut M2BPin(digitalPinToPinName(M1B));
 mbed::PwmOut M1FPin(digitalPinToPinName(M1F));
@@ -21,7 +24,8 @@ mbed::PwmOut M2FPin(digitalPinToPinName(M2F));
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
 float kAcc = 0.1, kGyro = 0.9;
-float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
+float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle;
+int turn = 0; // 0 = stationary, 1 = forward, -1 = backward, 2 = left, 3 = right
 
 //Specify the links and initial tuning parameters
 PID myPID(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd, DIRECT);
@@ -30,7 +34,6 @@ PID myPID(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd, DIRECT);
 BLEService customService("fc096266-ad93-482d-928c-c2560ea93a4e");
 BLECharacteristic customCharacteristic("9ff0183d-6d83-4d05-a10e-55c142bee2d1", BLERead | BLEWrite | BLENotify, BUFFER_SIZE, false);
 
-float turnCoeff, driveCoeff;
 
 void setup() {
   Serial.begin(9600);
@@ -145,29 +148,101 @@ void loop() {
       } else if (speed >= 0.9){
         speed = 0.9;
       }
-
-      if (currentAngle > (targetAngle)) {
-        M1FPin.write(1.0);
-        M1BPin.write(1.0 - speed);
-        M2FPin.write(1.0);
-        M2BPin.write(1.0 - speed);
-      } else if (currentAngle < (targetAngle))  {
-        M1FPin.write(1.0 - speed);
-        M1BPin.write(1.0);
-        M2FPin.write(1.0 - speed);
-        M2BPin.write(1.0);
-      } else {
-        M1FPin.write(1.0);
-        M1BPin.write(1.0);
-        M2FPin.write(1.0);
-        M2BPin.write(1.0);
-      }
       //----------------------------------------------------------
 
       //-------------------comm b/w esp & arduino-------------------
-      if (digitalRead(EF)) targetAngle = 1.0;
-      else if (digitalRead(EB)) targetAngle = -1.0;
-      else targetAngle = 0.0;
+      if (digitalRead(EF)) turn = 1;
+      else if (digitalRead(EB)) turn = 1;
+      else turn = 0;
+      //-----------------------------------------------------------
+
+      //------------------------directions-------------------------
+      if (turn = 1){ // forward 
+        if (currentAngle > (targetAngle + 1.0)) {
+          M1FPin.write(1.0);
+          M1BPin.write(1.0 - speed);
+          M2FPin.write(1.0);
+          M2BPin.write(1.0 - speed);
+        } else if (currentAngle < (targetAngle + 1.0)) {
+          M1FPin.write(1.0 - speed);
+          M1BPin.write(1.0);
+          M2FPin.write(1.0 - speed);
+          M2BPin.write(1.0);
+        } else {
+          M1FPin.write(1.0);
+          M1BPin.write(1.0);
+          M2FPin.write(1.0);
+          M2BPin.write(1.0);
+        }
+      } else if (turn = -1){ //backward 
+        if (currentAngle > (targetAngle - 1.0)) {
+          M1FPin.write(1.0);
+          M1BPin.write(1.0 - speed);
+          M2FPin.write(1.0);
+          M2BPin.write(1.0 - speed);
+        } else if (currentAngle < (targetAngle - 1.0)) {
+          M1FPin.write(1.0 - speed);
+          M1BPin.write(1.0);
+          M2FPin.write(1.0 - speed);
+          M2BPin.write(1.0);
+        } else {
+          M1FPin.write(1.0);
+          M1BPin.write(1.0);
+          M2FPin.write(1.0);
+          M2BPin.write(1.0);
+        }
+      } else if (turn = 2) { //left
+          if (currentAngle > targetAngle) {
+            M1FPin.write(1.0);
+            M1BPin.write(1.0 - speed);
+            M2FPin.write(1.0);
+            M2BPin.write(1.0 - speed);
+          } else if (currentAngle < targetAngle) {
+            M1FPin.write(1.0 - speed);
+            M1BPin.write(1.0);
+            M2FPin.write(1.0 - speed);
+            M2BPin.write(1.0);
+          } else {
+            M1FPin.write(1.0);
+            M1BPin.write(1.0);
+            M2FPin.write(1.0);
+            M2BPin.write(1.0);
+          }
+      } else if (turn = 3) { // right
+        if (currentAngle > targetAngle){
+          M1FPin.write(1.0);
+          M1BPin.write(1.0 - speed);
+          M2FPin.write(1.0);
+          M2BPin.write(1.0 - speed);
+        } else if (currentAngle < targetAngle){
+          M1FPin.write(1.0 - speed);
+          M1BPin.write(1.0);
+          M2FPin.write(1.0 - speed);
+          M2BPin.write(1.0);
+        } else {
+          M1FPin.write(1.0);
+          M1BPin.write(1.0);
+          M2FPin.write(1.0);
+          M2BPin.write(1.0);
+        }
+      } else { // stationary
+        if (currentAngle > (targetAngle)){
+          M1FPin.write(1.0);
+          M1BPin.write(1.0 - speed);
+          M2FPin.write(1.0);
+          M2BPin.write(1.0 - speed);
+        } else if (currentAngle < (targetAngle))  {
+          M1FPin.write(1.0 - speed);
+          M1BPin.write(1.0);
+          M2FPin.write(1.0 - speed);
+          M2BPin.write(1.0);
+        } else {
+          M1FPin.write(1.0);
+          M1BPin.write(1.0);
+          M2FPin.write(1.0);
+          M2BPin.write(1.0);
+        }
+      }
       //-----------------------------------------------------------
       // Serial.print("Kp: ");
       // Serial.print(Kp);
@@ -176,7 +251,7 @@ void loop() {
       // Serial.print("\tkd: ");
       // Serial.print(Kd);
       // Serial.println("\t");
-      //Serial.println(speed);
+      // Serial.println(speed);
     }
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     //Serial.println("Disconnected from central.");

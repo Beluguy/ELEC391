@@ -1,13 +1,11 @@
-#include <Wire.h>
-#include <AS5600.h>
 #include "Arduino_BMI270_BMM150.h"
 #include <PID_v1.h>
 #include "mbed.h"
 
-#define M2B D10 //yellow: motor 2
-#define M1F D9  //white:  motor 1
-#define M1B D8  //green:  motor 1
-#define M2F D7  //blue:   motor 2
+#define M1B D10 //Green: motor 1
+#define M1F D9  //Blue:  motor 1
+#define M2B D8  //Green: motor 2
+#define M2F D7  //Blue:  motor 2
 #define PWM_FREQ 10000.0
 
 mbed::PwmOut M2BPin( digitalPinToPinName( M2B ) );
@@ -24,7 +22,7 @@ float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
 PID myPID(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd, DIRECT);
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(4800);
   //while (!Serial);
   if (!IMU.begin()) {
     Serial.println("Failed to initialize IMU!");
@@ -61,10 +59,10 @@ void loop() {
     currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
     // Serial.print("Current Angle: ");
     Serial.println(currentAngle);
-    // Serial.print("\t");
-    // Serial.print(gyroAngle);
-    // Serial.print("\t");
-    // Serial.println(accAngle);
+    Serial.print("\t");
+    Serial.print(gyroAngle);
+    Serial.print("\t");
+    Serial.println(accAngle);
     }
   //-----------------------------------------------------------
 
@@ -89,7 +87,5 @@ void loop() {
     M2BPin.write(0.0);
   }
   //----------------------------------------------------------
-
-  //---------------------Calculate loop time--------------------
   //Serial.println(speed);
 }

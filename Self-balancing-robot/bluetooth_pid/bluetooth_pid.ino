@@ -1,5 +1,5 @@
-#include <ArduinoBLE.h>
 #include "Arduino_BMI270_BMM150.h"
+#include <ArduinoBLE.h>
 #include <PID_v1.h>
 #include "mbed.h"
 
@@ -11,10 +11,10 @@
 #define M2B D8  //Green: motor 2
 #define M2F D7  //Blue:  motor 2
 
-mbed::PwmOut M2BPin( digitalPinToPinName( M2B ) );
-mbed::PwmOut M1FPin ( digitalPinToPinName( M1F ) );
-mbed::PwmOut M1BPin( digitalPinToPinName( M1B ) );
-mbed::PwmOut M2FPin( digitalPinToPinName( M2F ) );
+mbed::PwmOut M2BPin(digitalPinToPinName(M1B));
+mbed::PwmOut M1FPin(digitalPinToPinName(M1F));
+mbed::PwmOut M1BPin(digitalPinToPinName(M2B));
+mbed::PwmOut M2FPin(digitalPinToPinName(M2F));
 
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
@@ -28,7 +28,6 @@ PID myPID(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd, DIRECT);
 BLEService customService("fc096266-ad93-482d-928c-c2560ea93a4e");
 BLECharacteristic customCharacteristic("9ff0183d-6d83-4d05-a10e-55c142bee2d1", BLERead | BLEWrite | BLENotify, BUFFER_SIZE, false);
 
-float turnCoeff, driveCoeff;
 
 void setup() {
   Serial.begin(9600);
@@ -81,8 +80,7 @@ void setup() {
 }
 
 void loop() {
-  
-  //----------------------------ble----------------------------------------
+//----------------------------ble----------------------------------------
   // Wait for a BLE central to connect
   BLEDevice central = BLE.central();
 
@@ -101,8 +99,6 @@ void loop() {
           static uint8_t data[12];
           customCharacteristic.readValue(data, length);
 
-          //memcpy(&turnCoeff, data, 4);  // Extract first float
-          //memcpy(&driveCoeff, data + 4, 4); // Extract second float
           memcpy(&Kp, data, 4); // Extract third float
           memcpy(&Ki, data + 4, 4); // Extract fourth float
           memcpy(&Kd, data + 8, 4); // Extract fifth float
@@ -124,13 +120,13 @@ void loop() {
         //Serial.println(dt);
 
         currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
-        // Serial.print("Current Angle: ");
-        // Serial.print(currentAngle);
-        // Serial.print("\tgyroAngle: ");
-        // Serial.print(gyroAngle);
-        // Serial.print("\taccAngle: ");
-        // Serial.print(accAngle);
-        // Serial.print("\t");
+        Serial.print("Current Angle: ");
+        Serial.print(currentAngle);
+        Serial.print("\tgyroAngle: ");
+        Serial.print(gyroAngle);
+        Serial.print("\taccAngle: ");
+        Serial.print(accAngle);
+        Serial.print("\t");
         }
       //-----------------------------------------------------------
 
@@ -139,13 +135,6 @@ void loop() {
       static float speed;
       speed = abs(PWM)/255.0;
 
-      if(speed <= 0.1){
-        speed = 0.1;
-      } else if (speed >= 0.9){
-        speed = 0.9;
-      }
-
-      Serial.println(speed);
       if (currentAngle > (targetAngle)) {
         M1FPin.write(1.0);
         M1BPin.write(1.0 - speed);
@@ -175,4 +164,5 @@ void loop() {
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     //Serial.println("Disconnected from central.");
   }
+//---------------------------------------------------------------------------
 }
