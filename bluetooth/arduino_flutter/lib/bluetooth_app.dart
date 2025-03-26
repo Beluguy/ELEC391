@@ -269,6 +269,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 const SizedBox(height: 10),
                 Text('Y: $_y'),
                 */
+
+                /*
                 // Joystick Buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -340,7 +342,7 @@ class _MyHomePageState extends State<MyHomePage> {
                    ),
                   ],
                 ), 
-                
+                */
 
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
