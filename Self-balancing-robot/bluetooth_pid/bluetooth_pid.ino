@@ -6,10 +6,10 @@
 #define BUFFER_SIZE 20
 #define PWM_FREQ 10000.0
 
-#define M1B D10 //Green: motor 1
-#define M1F D9  //Blue:  motor 1
-#define M2B D8  //Green: motor 2
-#define M2F D7  //Blue:  motor 2
+#define M1F D10 //Green: motor 1
+#define M1B D9  //Blue:  motor 1
+#define M2F D8  //Green: motor 2
+#define M2B D7  //Blue:  motor 2
 
 mbed::PwmOut M2BPin(digitalPinToPinName(M1B));
 mbed::PwmOut M1FPin(digitalPinToPinName(M1F));
@@ -42,8 +42,8 @@ void setup() {
   }
 
   // Set the device name and local name
-  BLE.setLocalName("BLE-DEVICE-A19");
-  BLE.setDeviceName("BLE-DEVICE-A19");
+  BLE.setLocalName("BLE-enjoyer");
+  BLE.setDeviceName("BLE-enjoyer");
 
   // Add the characteristic to the service
   customService.addCharacteristic(customCharacteristic);
@@ -120,13 +120,13 @@ void loop() {
         //Serial.println(dt);
 
         currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
-        Serial.print("Current Angle: ");
-        Serial.print(currentAngle);
-        Serial.print("\tgyroAngle: ");
-        Serial.print(gyroAngle);
-        Serial.print("\taccAngle: ");
-        Serial.print(accAngle);
-        Serial.print("\t");
+        // Serial.print("Current Angle: ");
+        // Serial.print(currentAngle);
+        // Serial.print("\tgyroAngle: ");
+        // Serial.print(gyroAngle);
+        // Serial.print("\taccAngle: ");
+        // Serial.print(accAngle);
+        // Serial.print("\t");
         }
       //-----------------------------------------------------------
 
@@ -152,14 +152,14 @@ void loop() {
         M2BPin.write(1.0);
       }
       //----------------------------------------------------------
-      // Serial.print("Kp: ");
-      // Serial.print(Kp);
-      // Serial.print("\tKi: ");
-      // Serial.print(Ki);
-      // Serial.print("\tkd: ");
-      // Serial.print(Kd);
-      // Serial.println("\t");
-      //Serial.println(speed);
+      Serial.print("Kp: ");
+      Serial.print(Kp);
+      Serial.print("\tKi: ");
+      Serial.print(Ki);
+      Serial.print("\tkd: ");
+      Serial.print(Kd);
+      Serial.print("\t");
+      Serial.println(speed);
     }
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     //Serial.println("Disconnected from central.");

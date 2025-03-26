@@ -8,12 +8,12 @@
 #define M2F D7  //Blue:  motor 2
 #define PWM_FREQ 10000.0
 
-mbed::PwmOut M2BPin( digitalPinToPinName( M2B ) );
-mbed::PwmOut M1FPin ( digitalPinToPinName( M1F ) );
-mbed::PwmOut M1BPin( digitalPinToPinName( M1B ) );
-mbed::PwmOut M2FPin( digitalPinToPinName( M2F ) );
+mbed::PwmOut M2BPin(digitalPinToPinName(M1B));
+mbed::PwmOut M1FPin(digitalPinToPinName(M1F));
+mbed::PwmOut M1BPin(digitalPinToPinName(M2B));
+mbed::PwmOut M2FPin(digitalPinToPinName(M2F));
 
-float Kp = 30.0, Ki = 370.0, Kd = 0.2;
+float Kp = 10.0, Ki = 0.0, Kd = 0.0;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
 float kAcc = 0.15, kGyro = 0.85;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
@@ -22,7 +22,7 @@ float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
 PID myPID(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd, DIRECT);
 
 void setup() {
-  Serial.begin(4800);
+  Serial.begin(9600);
   //while (!Serial);
   if (!IMU.begin()) {
     Serial.println("Failed to initialize IMU!");
@@ -47,22 +47,22 @@ void loop() {
   //----------------complementary filter------------------------
   if (IMU.gyroscopeAvailable() && IMU.accelerationAvailable()) {
     IMU.readAcceleration(accX, accY, accZ);
-    accAngle = RAD_TO_DEG*(accY/accZ);
+    accAngle = RAD_TO_DEG*atan(accY/accZ);
 
     IMU.readGyroscope(gyroX, gyroY, gyroZ);
     static double lastTime = millis();
     double dt = (millis() - lastTime) / 1000.0;
     lastTime = millis();
     gyroAngle = gyroZ * dt + currentAngle;
-    Serial.println(dt);
+    Serial.print(dt);
 
     currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
-    // Serial.print("Current Angle: ");
-    Serial.println(currentAngle);
-    Serial.print("\t");
+    Serial.print("Current Angle: ");
+    Serial.print(currentAngle);
+    Serial.print("\tgyroAngle: ");
     Serial.print(gyroAngle);
-    Serial.print("\t");
-    Serial.println(accAngle);
+    Serial.print("\taccAngle: ");
+    Serial.print(accAngle);
     }
   //-----------------------------------------------------------
 
@@ -70,22 +70,23 @@ void loop() {
   myPID.Compute();
   float speed = abs(PWM)/255.0;
 
-  if (currentAngle > targetAngle) {
-    M1FPin.write(speed);
-    M1BPin.write(0.0);
-    M2FPin.write(speed);
-    M2BPin.write(0.0);
-  } else if (currentAngle < targetAngle)  {
-    M1FPin.write(0.0);
-    M1BPin.write(speed);
-    M2FPin.write(0.0);
-    M2BPin.write(speed);
+  if (currentAngle > (targetAngle)) {
+    M1FPin.write(1.0);
+    M1BPin.write(1.0 - speed);
+    M2FPin.write(1.0);
+    M2BPin.write(1.0 - speed);
+  } else if (currentAngle < (targetAngle))  {
+    M1FPin.write(1.0 - speed);
+    M1BPin.write(1.0);
+    M2FPin.write(1.0 - speed);
+    M2BPin.write(1.0);
   } else {
-    M1FPin.write(0.0);
-    M1BPin.write(0.0);
-    M2FPin.write(0.0);
-    M2BPin.write(0.0);
+    M1FPin.write(1.0);
+    M1BPin.write(1.0);
+    M2FPin.write(1.0);
+    M2BPin.write(1.0);
   }
   //----------------------------------------------------------
-  //Serial.println(speed);
+  Serial.print("\tSpeed: ");
+  Serial.println(speed);
 }
