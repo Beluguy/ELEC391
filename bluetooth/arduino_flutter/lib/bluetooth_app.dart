@@ -171,9 +171,9 @@ class _MyHomePageState extends State<MyHomePage> {
         //data.setFloat32(0, turn, Endian.little); // First 4 bytes: X-coordinate
         //data.setFloat32(4, forward, Endian.little); // Next 4 bytes: Y-coordinate
         data.setInt8(0, turnCommand);
-        data.setFloat32(0, p, Endian.little); // Next 4 bytes: p
-        data.setFloat32(4, i, Endian.little); // Next 4 bytes: i
-        data.setFloat32(8, d, Endian.little); // Next 4 bytes: d
+        data.setFloat32(1, p, Endian.little); // Next 4 bytes: p
+        data.setFloat32(5, i, Endian.little); // Next 4 bytes: i
+        data.setFloat32(9, d, Endian.little); // Next 4 bytes: d
 
         final List<int> sendData = data.buffer.asUint8List();
       try {

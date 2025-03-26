@@ -95,13 +95,13 @@ void loop() {
       if (customCharacteristic.written()) {
         int length = customCharacteristic.valueLength();
         
-        if (length == 12) { // Expecting 20 bytes (5 floats)
-          static uint8_t data[12];
+        if (length == 13) { // Expecting 20 bytes (5 floats)
+          static uint8_t data[13];
           customCharacteristic.readValue(data, length);
 
-          memcpy(&Kp, data, 4); // Extract third float
-          memcpy(&Ki, data + 4, 4); // Extract fourth float
-          memcpy(&Kd, data + 8, 4); // Extract fifth float
+          memcpy(&Kp, data+1, 4); // Extract third float
+          memcpy(&Ki, data + 5, 4); // Extract fourth float
+          memcpy(&Kd, data + 9, 4); // Extract fifth float
           myPID.SetTunings(Kp, Ki, Kd);
         }
       }
@@ -134,6 +134,13 @@ void loop() {
       myPID.Compute();
       static float speed;
       speed = abs(PWM)/255.0;
+
+      if (speed <= 0.1){
+        speed = 0.1;
+      } else if (speed >= 0.9){
+        speed = 0.9;
+      }
+
 
       if (currentAngle > (targetAngle)) {
         M1FPin.write(1.0);

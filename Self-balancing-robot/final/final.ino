@@ -106,7 +106,7 @@ void loop() {
         int length = customCharacteristic.valueLength();
         
         if (length == 1) { // Expecting 20 bytes (5 floats)
-          static uint8_t data[1];
+          static uint8_t data[13];
           customCharacteristic.readValue(data, length);
           memcpy(&turn, data, 1);       // Extract first float
           Serial.print(turn);
