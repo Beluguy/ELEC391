@@ -28,7 +28,6 @@ PID myPID(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd, DIRECT);
 BLEService customService("fc096266-ad93-482d-928c-c2560ea93a4e");
 BLECharacteristic customCharacteristic("9ff0183d-6d83-4d05-a10e-55c142bee2d1", BLERead | BLEWrite | BLENotify, BUFFER_SIZE, false);
 
-float turnCoeff, driveCoeff;
 
 void setup() {
   Serial.begin(9600);
@@ -121,13 +120,13 @@ void loop() {
         //Serial.println(dt);
 
         currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
-        // Serial.print("Current Angle: ");
-        // Serial.print(currentAngle);
-        // Serial.print("\tgyroAngle: ");
-        // Serial.print(gyroAngle);
-        // Serial.print("\taccAngle: ");
-        // Serial.print(accAngle);
-        // Serial.print("\t");
+        Serial.print("Current Angle: ");
+        Serial.print(currentAngle);
+        Serial.print("\tgyroAngle: ");
+        Serial.print(gyroAngle);
+        Serial.print("\taccAngle: ");
+        Serial.print(accAngle);
+        Serial.print("\t");
         }
       //-----------------------------------------------------------
 
@@ -135,13 +134,6 @@ void loop() {
       myPID.Compute();
       static float speed;
       speed = abs(PWM)/255.0;
-      //Serial.println(speed);
-
-      // if(speed <= 0.1){
-      //   speed = 0.1;
-      // } else if (speed >= 0.9){
-      //   speed = 0.9;
-      // }
 
       if (currentAngle > (targetAngle)) {
         M1FPin.write(1.0);

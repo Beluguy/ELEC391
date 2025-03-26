@@ -135,8 +135,6 @@ void loop() {
       myPID.Compute();
       static float speed;
       speed = abs(PWM)/255.0;
-      //Serial.println(speed);
-
       // if(speed <= 0.1){
       //   speed = 0.1;
       // } else if (speed >= 0.9){
