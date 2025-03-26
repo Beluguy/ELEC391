@@ -152,14 +152,14 @@ void loop() {
         M2BPin.write(1.0);
       }
       //----------------------------------------------------------
-      // Serial.print("Kp: ");
-      // Serial.print(Kp);
-      // Serial.print("\tKi: ");
-      // Serial.print(Ki);
-      // Serial.print("\tkd: ");
-      // Serial.print(Kd);
-      // Serial.println("\t");
-      //Serial.println(speed);
+      Serial.print("Kp: ");
+      Serial.print(Kp);
+      Serial.print("\tKi: ");
+      Serial.print(Ki);
+      Serial.print("\tkd: ");
+      Serial.print(Kd);
+      Serial.println("\t");
+      Serial.println(speed);
     }
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     //Serial.println("Disconnected from central.");
