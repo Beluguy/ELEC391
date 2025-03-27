@@ -87,25 +87,25 @@ void setup() {
 
 void loop() {
   //----------------complementary filter------------------------
-      if (IMU.gyroscopeAvailable() && IMU.accelerationAvailable()) {
-        IMU.readAcceleration(accX, accY, accZ);
-        accAngle = RAD_TO_DEG*atan(accY/accZ);
+    if (IMU.gyroscopeAvailable() && IMU.accelerationAvailable()) {
+      IMU.readAcceleration(accX, accY, accZ);
+      accAngle = RAD_TO_DEG*atan(accY/accZ);
 
-        IMU.readGyroscope(gyroX, gyroY, gyroZ);
-        static double lastTime = millis();
-        dt = (millis() - lastTime) / 1000.0;
-        lastTime = millis();
-        gyroAngle = -1.0 * gyroX * dt + currentAngle;
-        //Serial.println(dt);
+      IMU.readGyroscope(gyroX, gyroY, gyroZ);
+      static double lastTimeNoBLE = millis();
+      dt = (millis() - lastTime) / 1000.0;
+      lastTimeNoBLE = millis();
+      gyroAngle = -1.0 * gyroX * dt + currentAngle;
+      //Serial.println(dt);
 
-        currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
-        // Serial.print("Current Angle: ");
-        // Serial.println(currentAngle);
-        // Serial.print("\t");
-        // Serial.print(gyroAngle);
-        // Serial.print("\t");
-        // Serial.println(accAngle);
-        }
+      currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
+      // Serial.print("Current Angle: ");
+      // Serial.println(currentAngle);
+      // Serial.print("\t");
+      // Serial.print(gyroAngle);
+      // Serial.print("\t");
+      // Serial.println(accAngle);
+      }
       //-----------------------------------------------------------
 
   //----------------------------ble----------------------------------------
@@ -141,6 +141,9 @@ void loop() {
         accAngle = RAD_TO_DEG*atan(accY/accZ);
 
         IMU.readGyroscope(gyroX, gyroY, gyroZ);
+        static double lastTimeInBLE = millis();
+        dt = (millis() - lastTime) / 1000.0;
+        lastTimeInBLE = millis();
         gyroAngle = -1.0 * gyroX * dt + currentAngle;
         //Serial.println(dt);
 
