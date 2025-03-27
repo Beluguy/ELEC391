@@ -66,7 +66,7 @@ void setup() {
     while (1);
   }
   myPID.SetOutputLimits(-255, 255);
-  myPID.SetSampleTime(10);
+  myPID.SetSampleTime(1);
   myPID.SetMode(AUTOMATIC);
 
   pinMode(M1F, OUTPUT);
@@ -110,23 +110,23 @@ void loop() {
       //----------------complementary filter------------------------
       if (IMU.gyroscopeAvailable() && IMU.accelerationAvailable()) {
         IMU.readAcceleration(accX, accY, accZ);
-        accAngle = RAD_TO_DEG*atan(accY/accZ) + 0.3;
+        accAngle = RAD_TO_DEG*atan(accY/accZ);
 
         IMU.readGyroscope(gyroX, gyroY, gyroZ);
         static double lastTime = millis();
         double dt = (millis() - lastTime) / 1000.0;
         lastTime = millis();
-        gyroAngle = gyroX * dt + currentAngle;
+        gyroAngle = -1.0 * gyroX * dt + currentAngle;
         //Serial.println(dt);
 
         currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
-        Serial.print("Current Angle: ");
-        Serial.print(currentAngle);
-        Serial.print("\tgyroAngle: ");
-        Serial.print(gyroAngle);
-        Serial.print("\taccAngle: ");
-        Serial.print(accAngle);
-        Serial.print("\t");
+        // Serial.print("Current Angle: ");
+        // Serial.print(currentAngle);
+        // Serial.print("\tgyroAngle: ");
+        // Serial.print(gyroAngle);
+        // Serial.print("\taccAngle: ");
+        // Serial.println(accAngle);
+        // Serial.print("\t");
         }
       //-----------------------------------------------------------
 
