@@ -377,23 +377,41 @@ class _MyHomePageState extends State<MyHomePage> {
  
                      ),
                      SizedBox(height: 5),
-                    
-                    ElevatedButton(
-                      onPressed: (){
-                        lastInput1 = num1;
-                        lastInput2 = num2;
-                        lastInput3 = num3;
-
-                        num1 = double.tryParse(myController1.text) ?? 0;
-                        num2 = double.tryParse(myController2.text) ?? 0;
-                        num3 = double.tryParse(myController3.text) ?? 0;
-                        if(_isConnected){
-                          _sendCommand(0, num1, num2, num3);
-                        }
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+              
                         
-                      },
-                      child: const Text('Send PID'),
+                        ElevatedButton(
+                          onPressed: (){
+                            lastInput1 = num1;
+                            lastInput2 = num2;
+                            lastInput3 = num3;
+
+                            num1 = double.tryParse(myController1.text) ?? 0;
+                            num2 = double.tryParse(myController2.text) ?? 0;
+                            num3 = double.tryParse(myController3.text) ?? 0;
+                            if(_isConnected){
+                              _sendCommand(0, num1, num2, num3);
+                            }
+                            
+                          },
+                          child: const Text('Send PID'),
+                        ),
+                        ElevatedButton(
+                          onPressed: (){
+                            
+                            if(_isConnected){
+                              _sendCommand(10, num1, num2, num3); //10 = reset flag, check for flag on arduino, change back to original turn value
+                            }
+                            
+                          },
+                            child: const Text('Reset integral error'),
+                        ),
+                      ]
+                        
                     ),
+                    
                     
                     /*
                     const SizedBox(width: 10),
