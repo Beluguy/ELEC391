@@ -25,6 +25,7 @@ int turn = 0;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
 float kAcc = 0.1, kGyro = 0.9;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle;
+double dt;
 
 // Define a custom BLE service and characteristic
 BLEService customService("fc096266-ad93-482d-928c-c2560ea93a4e");
@@ -67,9 +68,9 @@ void setup() {
     //Serial.println("Failed to initialize IMU!");
     while (1);
   }
-  myController.begin(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd);
+  myController.begin(&currentAngle, &PWM, &targetAngle, Kp, 0.0, Kd);
 
-  //myController.setOutputLimits(-255, 255);
+  myController.setOutputLimits(-255, 255);
   //myController.setWindUpLimits(-100, 100); // Groth bounds for the integral term to prevent integral wind-up
   myController.setSampleTime(10);
   myController.start();
@@ -119,7 +120,7 @@ void loop() {
 
         IMU.readGyroscope(gyroX, gyroY, gyroZ);
         static double lastTime = millis();
-        double dt = (millis() - lastTime) / 1000.0;
+        dt = (millis() - lastTime) / 1000.0;
         lastTime = millis();
         gyroAngle = -1.0 * gyroX * dt + currentAngle;
         //Serial.println(dt);
@@ -140,7 +141,7 @@ void loop() {
 
       myController.compute();
 
-      static float PWM_new = 0;
+      static float PWM_new = 0.0;
       PWM_new = integralSum + PWM;
 
       PWM_new = constrain(PWM_new, -255, 255);
@@ -148,8 +149,7 @@ void loop() {
       static float speed;
       speed = abs(PWM_new)/255.0;
 
-      if (currentAngle > (targetAngle - 0.5)) {
-
+      if (currentAngle > (targetAngle)) {
         M1FPin.write(1.0);
         M1BPin.write(1.0 - speed);
         M2FPin.write(1.0);
