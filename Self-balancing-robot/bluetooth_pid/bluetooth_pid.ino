@@ -19,7 +19,7 @@ mbed::PwmOut M2FPin(digitalPinToPinName(M2F));
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
 float kAcc = 0.1, kGyro = 0.9;
-float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate;
+float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle;
 
 //Specify the links and initial tuning parameters
 PID myPID(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd, DIRECT);
@@ -134,9 +134,6 @@ void loop() {
       myPID.Compute();
       static float speed;
       speed = abs(PWM)/255.0;
-
-      //if (speed < 0.05) speed = 0.05;
-      //else if (speed > 0.95) speed = 0.95;
 
       if (currentAngle > (targetAngle)) {
         M1FPin.write(1.0);
