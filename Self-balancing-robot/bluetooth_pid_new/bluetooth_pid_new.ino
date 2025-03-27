@@ -68,7 +68,7 @@ void setup() {
   }
   myController.begin(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd);
   myController.setOutputLimits(-255, 255);
-  //myController.setWindUpLimits(-10, 10); // Groth bounds for the integral term to prevent integral wind-up
+  myController.setWindUpLimits(-255, 255); // Groth bounds for the integral term to prevent integral wind-up
   myController.setSampleTime(1);
   myController.start();
 
@@ -113,7 +113,7 @@ void loop() {
       //----------------complementary filter------------------------
       if (IMU.gyroscopeAvailable() && IMU.accelerationAvailable()) {
         IMU.readAcceleration(accX, accY, accZ);
-        accAngle = RAD_TO_DEG*atan(accY/accZ) + 0.5;
+        accAngle = RAD_TO_DEG*atan(accY/accZ) + 0.3;
 
         IMU.readGyroscope(gyroX, gyroY, gyroZ);
         static double lastTime = millis();
