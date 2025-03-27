@@ -68,7 +68,7 @@ void setup() {
   }
   myController.begin(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd);
   myController.setOutputLimits(-255, 255);
-  //myController.setWindUpLimits(-100, 100); // Groth bounds for the integral term to prevent integral wind-up
+  //myController.setWindUpLimits(-10, 10); // Groth bounds for the integral term to prevent integral wind-up
   myController.setSampleTime(1);
   myController.start();
 
@@ -113,7 +113,7 @@ void loop() {
       //----------------complementary filter------------------------
       if (IMU.gyroscopeAvailable() && IMU.accelerationAvailable()) {
         IMU.readAcceleration(accX, accY, accZ);
-        accAngle = RAD_TO_DEG*atan(accY/accZ);
+        accAngle = RAD_TO_DEG*atan(accY/accZ) + 0.5;
 
         IMU.readGyroscope(gyroX, gyroY, gyroZ);
         static double lastTime = millis();
@@ -124,7 +124,7 @@ void loop() {
 
         currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
         // Serial.print("Current Angle: ");
-        // Serial.print(currentAngle);
+        // Serial.println(currentAngle);
         // Serial.print("\t");
         // Serial.print(gyroAngle);
         // Serial.print("\t");
@@ -136,34 +136,23 @@ void loop() {
       myController.compute();
       static float speed;
       speed = abs(PWM)/255.0;
-
-      if (currentAngle > (targetAngle - 0.5)) {
+      if (currentAngle > 20.0) myController.reset();
+      
+      if (currentAngle > (targetAngle)) {
         M1FPin.write(1.0);
         M1BPin.write(1.0 - speed);
         M2FPin.write(1.0);
         M2BPin.write(1.0 - speed);
-        // M1FPin.write(speed);
-        // M1BPin.write(0.0);
-        // M2FPin.write(speed);
-        // M2BPin.write(0.0);
-      } else if (currentAngle < (targetAngle + 0.5))  {
+      } else if (currentAngle < (targetAngle))  {
         M1FPin.write(1.0 - speed);
         M1BPin.write(1.0);
         M2FPin.write(1.0 - speed);
         M2BPin.write(1.0);
-        // M1FPin.write(0.0);
-        // M1BPin.write(speed);
-        // M2FPin.write(0.0);
-        // M2BPin.write(speed);
       } else {
         M1FPin.write(1.0);
         M1BPin.write(1.0);
         M2FPin.write(1.0);
         M2BPin.write(1.0);
-        // M1FPin.write(0.0);
-        // M1BPin.write(0.0);
-        // M2FPin.write(0.0);
-        // M2BPin.write(0.0);
       }
       //----------------------------------------------------------
       // Serial.print(Kp);
