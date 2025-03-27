@@ -22,6 +22,7 @@ ArduPID myController;
 
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
 int turn = 0;
+int lastTurn = 0;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
 float kAcc = 0.1, kGyro = 0.9;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle;
@@ -124,7 +125,8 @@ void loop() {
         if (length == 13) { // Expecting 20 bytes (5 floats)
           static uint8_t data[13];
           customCharacteristic.readValue(data, length);
-
+          lastTurn = turn;
+          memcpy(&turn, data, 1);
           memcpy(&Kp, data + 1, 4); // Extract third float
           memcpy(&Ki, data + 5, 4); // Extract fourth float
           memcpy(&Kd, data + 9, 4); // Extract fifth float
@@ -156,11 +158,19 @@ void loop() {
       //-----------------------------------------------------------
 
       //----------------------PID---------------------------------
+      if(turn == 10){
+        myController.reset();
+        delay(200);
+        Serial.println("RESET");
+        turn = lastTurn;
+      }
+
       myController.compute();
       //-----------------------motor control-----------------------
 
       static float speed;
       speed = abs(PWM)/255.0;
+      
 
       if (currentAngle > (targetAngle)) {
         M1FPin.write(1.0);
@@ -186,7 +196,11 @@ void loop() {
       // Serial.print(Kd);
       // Serial.print("\t");
       //Serial.println(speed);
+      Serial.print(lastTurn);
+      Serial.print("\t");
+      Serial.println(turn);
       //myController.debug(&Serial, "", PRINT_INPUT | PRINT_OUTPUT | PRINT_SETPOINT | PRINT_BIAS | PRINT_P | PRINT_I | PRINT_D );
+
     }
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     //Serial.println("Disconnected from central.");
