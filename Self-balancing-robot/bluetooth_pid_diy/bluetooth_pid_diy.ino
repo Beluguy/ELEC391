@@ -72,7 +72,7 @@ void setup() {
 
   myController.setOutputLimits(-255, 255);
   //myController.setWindUpLimits(-100, 100); // Groth bounds for the integral term to prevent integral wind-up
-  myController.setSampleTime(10);
+  myController.setSampleTime(0.001);
   myController.start();
 
   pinMode(M1F, OUTPUT);
@@ -86,6 +86,28 @@ void setup() {
 }
 
 void loop() {
+  //----------------complementary filter------------------------
+      if (IMU.gyroscopeAvailable() && IMU.accelerationAvailable()) {
+        IMU.readAcceleration(accX, accY, accZ);
+        accAngle = RAD_TO_DEG*atan(accY/accZ);
+
+        IMU.readGyroscope(gyroX, gyroY, gyroZ);
+        static double lastTime = millis();
+        dt = (millis() - lastTime) / 1000.0;
+        lastTime = millis();
+        gyroAngle = -1.0 * gyroX * dt + currentAngle;
+        //Serial.println(dt);
+
+        currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
+        // Serial.print("Current Angle: ");
+        // Serial.println(currentAngle);
+        // Serial.print("\t");
+        // Serial.print(gyroAngle);
+        // Serial.print("\t");
+        // Serial.println(accAngle);
+        }
+      //-----------------------------------------------------------
+
   //----------------------------ble----------------------------------------
   // Wait for a BLE central to connect
   BLEDevice central = BLE.central();
@@ -112,16 +134,13 @@ void loop() {
         }
       }
       //----------------------------------------------------------------------------------
-      
+
       //----------------complementary filter------------------------
       if (IMU.gyroscopeAvailable() && IMU.accelerationAvailable()) {
         IMU.readAcceleration(accX, accY, accZ);
-        accAngle = RAD_TO_DEG*atan(accY/accZ) + 0.3;
+        accAngle = RAD_TO_DEG*atan(accY/accZ);
 
         IMU.readGyroscope(gyroX, gyroY, gyroZ);
-        static double lastTime = millis();
-        dt = (millis() - lastTime) / 1000.0;
-        lastTime = millis();
         gyroAngle = -1.0 * gyroX * dt + currentAngle;
         //Serial.println(dt);
 
@@ -136,20 +155,10 @@ void loop() {
       //-----------------------------------------------------------
 
       //----------------------PID---------------------------------
-      static float integralSum;
-      integralSum += Ki * (targetAngle - currentAngle) * dt;
-
       myController.compute();
-
-      static float PWM_new = 0.0;
-      PWM_new = integralSum + PWM;
-
-      PWM_new = constrain(PWM_new, -255, 255);
-
-      
-      //---------------------------------------------------------
+      //-----------------------motor control-----------------------
       static float speed;
-      speed = abs(PWM_new)/255.0;
+      speed = abs(PWM)/255.0;
 
       if (currentAngle > (targetAngle)) {
         M1FPin.write(1.0);
@@ -167,7 +176,7 @@ void loop() {
         M2FPin.write(1.0);
         M2BPin.write(1.0);
       }
-      //----------------------------------------------------------
+      //--------------------------------------------------------------
       // Serial.print(Kp);
       // Serial.print("\t");
       // Serial.print(Ki);
