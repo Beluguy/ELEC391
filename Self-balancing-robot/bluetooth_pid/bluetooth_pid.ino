@@ -17,6 +17,7 @@ mbed::PwmOut M1BPin(digitalPinToPinName(M2B));
 mbed::PwmOut M2FPin(digitalPinToPinName(M2F));
 
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
+
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
 float kAcc = 0.1, kGyro = 0.9;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle;
@@ -99,6 +100,7 @@ void loop() {
           static uint8_t data[13];
           customCharacteristic.readValue(data, length);
 
+          memcpy(&turn, data, 1);
           memcpy(&Kp, data + 1, 4); // Extract third float
           memcpy(&Ki, data + 5, 4); // Extract fourth float
           memcpy(&Kd, data + 9, 4); // Extract fifth float
@@ -132,8 +134,10 @@ void loop() {
 
       //----------------------PID---------------------------------
       myPID.Compute();
+
       static float speed;
       speed = abs(PWM)/255.0;
+
 
       if (currentAngle > (targetAngle)) {
         M1FPin.write(1.0);

@@ -21,6 +21,7 @@ mbed::PwmOut M2FPin(digitalPinToPinName(M2F));
 ArduPID myController;
 
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
+int turn = 0;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
 float kAcc = 0.1, kGyro = 0.9;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle;
@@ -67,9 +68,9 @@ void setup() {
     while (1);
   }
   myController.begin(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd);
-  myController.setOutputLimits(-255, 255);
+  //myController.setOutputLimits(-255, 255);
   //myController.setWindUpLimits(-100, 100); // Groth bounds for the integral term to prevent integral wind-up
-  myController.setSampleTime(1);
+  myController.setSampleTime(10);
   myController.start();
 
   pinMode(M1F, OUTPUT);
@@ -133,9 +134,18 @@ void loop() {
       //-----------------------------------------------------------
 
       //----------------------PID---------------------------------
+      static float integralSum;
+      integralSum += Ki * (targetAngle - currentAngle) * dt;
+
       myController.compute();
+
+      static float PWM_new = 0;
+      PWM_new = integralSum + PWM;
+
+      PWM_new = constrain(PWM_new, -255, 255);
+
       static float speed;
-      speed = abs(PWM)/255.0;
+      speed = abs(PWM_new)/255.0;
 
       if (currentAngle > (targetAngle - 0.5)) {
         M1FPin.write(1.0);
