@@ -72,7 +72,7 @@ void setup() {
 
   myController.setOutputLimits(-255, 255);
   myController.setWindUpLimits(-255, 255); // Groth bounds for the integral term to prevent integral wind-up
-  myController.setBias(10);
+  //myController.setBias(10);
   myController.start();
 
   pinMode(M1F, OUTPUT);
