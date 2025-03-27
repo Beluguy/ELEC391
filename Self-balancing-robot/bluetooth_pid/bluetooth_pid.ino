@@ -99,7 +99,7 @@ void loop() {
           static uint8_t data[13];
           customCharacteristic.readValue(data, length);
 
-          memcpy(&Kp, data+1, 4); // Extract third float
+          memcpy(&Kp, data + 1, 4); // Extract third float
           memcpy(&Ki, data + 5, 4); // Extract fourth float
           memcpy(&Kd, data + 9, 4); // Extract fifth float
           myPID.SetTunings(Kp, Ki, Kd);
@@ -110,13 +110,13 @@ void loop() {
       //----------------complementary filter------------------------
       if (IMU.gyroscopeAvailable() && IMU.accelerationAvailable()) {
         IMU.readAcceleration(accX, accY, accZ);
-        accAngle = RAD_TO_DEG*atan(accY/accZ) + 0.5;
+        accAngle = RAD_TO_DEG*atan(accY/accZ) + 0.3;
 
         IMU.readGyroscope(gyroX, gyroY, gyroZ);
         static double lastTime = millis();
         double dt = (millis() - lastTime) / 1000.0;
         lastTime = millis();
-        gyroAngle = gyroZ * dt + currentAngle;
+        gyroAngle = gyroX * dt + currentAngle;
         //Serial.println(dt);
 
         currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
@@ -135,8 +135,8 @@ void loop() {
       static float speed;
       speed = abs(PWM)/255.0;
 
-      if (speed < 0.05) speed = 0.05;
-      else if (speed > 0.95) speed = 0.95;
+      //if (speed < 0.05) speed = 0.05;
+      //else if (speed > 0.95) speed = 0.95;
 
       if (currentAngle > (targetAngle)) {
         M1FPin.write(1.0);

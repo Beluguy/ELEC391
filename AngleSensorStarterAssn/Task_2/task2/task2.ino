@@ -16,7 +16,7 @@ void loop() {
 
   if (IMU.accelerationAvailable()) {
     IMU.readAcceleration(x, y, z);
-    angle = RAD_TO_DEG*atan(y/z);
+    angle = RAD_TO_DEG*atan(y/z);z
     Serial.println(angle);
   }
 }

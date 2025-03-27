@@ -29,8 +29,6 @@ float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle;
 BLEService customService("fc096266-ad93-482d-928c-c2560ea93a4e");
 BLECharacteristic customCharacteristic("9ff0183d-6d83-4d05-a10e-55c142bee2d1", BLERead | BLEWrite | BLENotify, BUFFER_SIZE, false);
 
-float turnCoeff, driveCoeff;
-
 
 void setup() {
   Serial.begin(9600);
@@ -45,8 +43,8 @@ void setup() {
   }
 
   // Set the device name and local name
-  BLE.setLocalName("BLE-DEVICE-A19");
-  BLE.setDeviceName("BLE-DEVICE-A19");
+  BLE.setLocalName("BLE-enjoyer");
+  BLE.setDeviceName("BLE-enjoyer");
 
   // Add the characteristic to the service
   customService.addCharacteristic(customCharacteristic);
@@ -105,7 +103,7 @@ void loop() {
           static uint8_t data[13];
           customCharacteristic.readValue(data, length);
 
-          memcpy(&Kp, data+1, 4); // Extract third float
+          memcpy(&Kp, data + 1, 4); // Extract third float
           memcpy(&Ki, data + 5, 4); // Extract fourth float
           memcpy(&Kd, data + 9, 4); // Extract fifth float
           myController.setCoefficients(Kp, Ki, Kd);
@@ -126,7 +124,7 @@ void loop() {
         //Serial.println(dt);
 
         currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
-        //Serial.print("Current Angle: ");
+        // Serial.print("Current Angle: ");
         // Serial.print(currentAngle);
         // Serial.print("\t");
         // Serial.print(gyroAngle);
@@ -140,8 +138,8 @@ void loop() {
       static float speed;
       speed = abs(PWM)/255.0;
 
-      if (speed < 0.05) speed = 0.05;
-      else if (speed > 0.95) speed = 0.95;
+      // if (speed < 0.05) speed = 0.05;
+      // else if (speed > 0.95) speed = 0.95;
 
       if (currentAngle > (targetAngle)) {
         M1FPin.write(1.0);
