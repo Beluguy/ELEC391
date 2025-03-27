@@ -23,7 +23,7 @@ ArduPID myController;
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
 int turn = 0;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
-float kAcc = 0.1, kGyro = 0.9;
+float kAcc = 0.05, kGyro = 0.95;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle;
 double dt1, dt2;
 
@@ -71,7 +71,8 @@ void setup() {
   myController.begin(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd);
 
   myController.setOutputLimits(-255, 255);
-  myController.setWindUpLimits(-20, 20); // Groth bounds for the integral term to prevent integral wind-up
+  myController.setWindUpLimits(-255, 255); // Groth bounds for the integral term to prevent integral wind-up
+  myController.setBias(10);
   myController.start();
 
   pinMode(M1F, OUTPUT);
@@ -147,7 +148,7 @@ void loop() {
 
         currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
         // Serial.print("Current Angle: ");
-        // Serial.println(currentAngle);
+        // Serial.print(currentAngle);
         // Serial.print("\t");
         // Serial.print(gyroAngle);
         // Serial.print("\t");
@@ -161,6 +162,8 @@ void loop() {
 
       static float speed;
       speed = abs(PWM)/255.0;
+
+      if (speed < 0.05) speed = 0.05;
 
       if (currentAngle > (targetAngle)) {
         M1FPin.write(1.0);
