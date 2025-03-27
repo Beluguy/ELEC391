@@ -25,7 +25,7 @@ int turn = 0;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
 float kAcc = 0.1, kGyro = 0.9;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle;
-double dt;
+double dt1, dt2;
 
 // Define a custom BLE service and characteristic
 BLEService customService("fc096266-ad93-482d-928c-c2560ea93a4e");
@@ -68,11 +68,10 @@ void setup() {
     //Serial.println("Failed to initialize IMU!");
     while (1);
   }
-  myController.begin(&currentAngle, &PWM, &targetAngle, Kp, 0.0, Kd);
+  myController.begin(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd);
 
   myController.setOutputLimits(-255, 255);
-  //myController.setWindUpLimits(-100, 100); // Groth bounds for the integral term to prevent integral wind-up
-  myController.setSampleTime(0.001);
+  myController.setWindUpLimits(-20, 20); // Groth bounds for the integral term to prevent integral wind-up
   myController.start();
 
   pinMode(M1F, OUTPUT);
@@ -92,11 +91,10 @@ void loop() {
       accAngle = RAD_TO_DEG*atan(accY/accZ);
 
       IMU.readGyroscope(gyroX, gyroY, gyroZ);
-      static double lastTimeNoBLE = millis();
-      dt = (millis() - lastTime) / 1000.0;
-      lastTimeNoBLE = millis();
-      gyroAngle = -1.0 * gyroX * dt + currentAngle;
-      //Serial.println(dt);
+      static double lastTimeNoBLE = micros();
+      dt1 = (micros() - lastTimeNoBLE) / 1000000.0;
+      lastTimeNoBLE = micros();
+      gyroAngle = -1.0 * gyroX * dt1 + currentAngle;
 
       currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
       // Serial.print("Current Angle: ");
@@ -141,11 +139,11 @@ void loop() {
         accAngle = RAD_TO_DEG*atan(accY/accZ);
 
         IMU.readGyroscope(gyroX, gyroY, gyroZ);
-        static double lastTimeInBLE = millis();
-        dt = (millis() - lastTime) / 1000.0;
-        lastTimeInBLE = millis();
-        gyroAngle = -1.0 * gyroX * dt + currentAngle;
-        //Serial.println(dt);
+        static double lastTimeInBLE = micros();
+        dt2 = (micros() - lastTimeInBLE) / 1000000.0;
+        lastTimeInBLE = micros();
+        gyroAngle = -1.0 * gyroX * dt2 + currentAngle;
+        //Serial.println(dt,5);
 
         currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
         // Serial.print("Current Angle: ");
@@ -188,6 +186,7 @@ void loop() {
       // Serial.print(Kd);
       // Serial.print("\t");
       //Serial.println(speed);
+      //myController.debug(&Serial, "", PRINT_INPUT | PRINT_OUTPUT | PRINT_SETPOINT | PRINT_BIAS | PRINT_P | PRINT_I | PRINT_D );
     }
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     //Serial.println("Disconnected from central.");
