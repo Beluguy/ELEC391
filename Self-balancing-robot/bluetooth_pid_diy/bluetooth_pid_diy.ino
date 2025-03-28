@@ -162,7 +162,7 @@ void loop() {
       if(turn == 10){
         myController.reset();
         delay(200);
-        Serial.println("RESET");
+        //Serial.println("RESET");
         turn = lastTurn;
       }
 
@@ -199,9 +199,9 @@ void loop() {
       // Serial.print(Kd);
       // Serial.print("\t");
       //Serial.println(speed);
-      Serial.print(lastTurn);
-      Serial.print("\t");
-      Serial.println(turn);
+      // Serial.print(lastTurn);
+      // Serial.print("\t");
+      // Serial.println(turn);
       //myController.debug(&Serial, "", PRINT_INPUT | PRINT_OUTPUT | PRINT_SETPOINT | PRINT_BIAS | PRINT_P | PRINT_I | PRINT_D );
 
     }
