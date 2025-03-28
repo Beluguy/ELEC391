@@ -1,8 +1,6 @@
 #include <ArduinoBLE.h>             // Bluetooth
 #include "Arduino_BMI270_BMM150.h"  // IMU
 #include "ArduPID.h"                // PID
-//#include <Wire.h>                 // I2C
-//#include <AS5600.h>               // Encoder
 #include "mbed.h"                   // Customer PWM freq
 
 #define BUFFER_SIZE 20
@@ -24,8 +22,8 @@ float Kp = 0.0, Ki = 0.0, Kd = 0.0;
 int turn = 0;
 int lastTurn = 0;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
-float kAcc = 0.1, kGyro = 0.9;
-float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle;
+float kAcc = 0.15, kGyro = 0.85;
+float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle, SampleRate, SampleRatea;
 double dt1, dt2;
 
 // Define a custom BLE service and characteristic
@@ -34,7 +32,7 @@ BLECharacteristic customCharacteristic("9ff0183d-6d83-4d05-a10e-55c142bee2d1", B
 
 
 void setup() {
-  Serial.begin(9600);
+  //Serial.begin(2000000);
   //while (!Serial);
   //---------------------ble-----------------------------------
   // Initialize the built-in LED to indicate connection status
@@ -69,6 +67,7 @@ void setup() {
     //Serial.println("Failed to initialize IMU!");
     while (1);
   }
+  
   myController.begin(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd);
 
   myController.setOutputLimits(-255, 255);
@@ -87,27 +86,6 @@ void setup() {
 }
 
 void loop() {
-  //----------------complementary filter------------------------
-    if (IMU.gyroscopeAvailable() && IMU.accelerationAvailable()) {
-      IMU.readAcceleration(accX, accY, accZ);
-      accAngle = RAD_TO_DEG*atan(accY/accZ);
-
-      IMU.readGyroscope(gyroX, gyroY, gyroZ);
-      static double lastTimeNoBLE = micros();
-      dt1 = (micros() - lastTimeNoBLE) / 1000000.0;
-      lastTimeNoBLE = micros();
-      gyroAngle = -1.0 * gyroX * dt1 + currentAngle;
-
-      currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
-      // Serial.print("Current Angle: ");
-      // Serial.println(currentAngle);
-      // Serial.print("\t");
-      // Serial.print(gyroAngle);
-      // Serial.print("\t");
-      // Serial.println(accAngle);
-      }
-      //-----------------------------------------------------------
-
   //----------------------------ble----------------------------------------
   // Wait for a BLE central to connect
   BLEDevice central = BLE.central();
@@ -139,18 +117,18 @@ void loop() {
       //----------------complementary filter------------------------
       if (IMU.gyroscopeAvailable() && IMU.accelerationAvailable()) {
         IMU.readAcceleration(accX, accY, accZ);
-        accAngle = RAD_TO_DEG*atan(accY/accZ);
+        accAngle = RAD_TO_DEG*atan(accY/accZ) - 0.5;
 
         IMU.readGyroscope(gyroX, gyroY, gyroZ);
         static double lastTimeInBLE = micros();
         dt2 = (micros() - lastTimeInBLE) / 1000000.0;
         lastTimeInBLE = micros();
         gyroAngle = -1.0 * gyroX * dt2 + currentAngle;
-        //Serial.println(dt,5);
+        //Serial.println(dt2,5);
 
         currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
         // Serial.print("Current Angle: ");
-        // Serial.print(currentAngle);
+        Serial.println(currentAngle);
         // Serial.print("\t");
         // Serial.print(gyroAngle);
         // Serial.print("\t");
@@ -159,27 +137,27 @@ void loop() {
       //-----------------------------------------------------------
 
       //----------------------PID---------------------------------
-      if(turn == 10){
-        myController.reset();
-        delay(200);
-        //Serial.println("RESET");
-        turn = lastTurn;
-      }
+      // if(turn == 10){
+      //   myController.reset();
+      //   delay(200);
+      //   //Serial.println("RESET");
+      //   turn = lastTurn;
+      // }
 
       myController.compute();
       //-----------------------motor control-----------------------
       static float speed;
       speed = abs(PWM)/255.0;
-      if (speed < 0.05) speed = 0.05;
+      //if (speed < 0.05) speed = 0.05;
 
-      if (currentAngle > (targetAngle + 0.3)) {
-        speed = speed * 1.15;
-        if (speed > 1.0) speed = 1.0;
+      if (currentAngle > (targetAngle)) {
+        //speed = speed * 1.1;
+        //if (speed > 1.0) speed = 1.0;
         M1FPin.write(1.0);
         M1BPin.write(1.0 - speed);
         M2FPin.write(1.0);
         M2BPin.write(1.0 - speed);
-      } else if (currentAngle < (targetAngle - 0.3))  {
+      } else if (currentAngle < (targetAngle))  {
         M1FPin.write(1.0 - speed);
         M1BPin.write(1.0);
         M2FPin.write(1.0 - speed);
