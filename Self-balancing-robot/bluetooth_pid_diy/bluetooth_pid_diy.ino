@@ -24,7 +24,7 @@ float Kp = 0.0, Ki = 0.0, Kd = 0.0;
 int turn = 0;
 int lastTurn = 0;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
-float kAcc = 0.05, kGyro = 0.95;
+float kAcc = 0.1, kGyro = 0.9;
 float accX, accY, accZ, gyroX, gyroY, gyroZ, accAngle, gyroAngle;
 double dt1, dt2;
 
@@ -73,7 +73,7 @@ void setup() {
 
   myController.setOutputLimits(-255, 255);
   myController.setWindUpLimits(-255, 255); // Groth bounds for the integral term to prevent integral wind-up
-  //myController.setBias(10);
+  //myController.setBias(-10);
   myController.start();
 
   pinMode(M1F, OUTPUT);
@@ -168,19 +168,18 @@ void loop() {
 
       myController.compute();
       //-----------------------motor control-----------------------
-
       static float speed;
       speed = abs(PWM)/255.0;
-      
-
       if (speed < 0.05) speed = 0.05;
 
-      if (currentAngle > (targetAngle)) {
+      if (currentAngle > (targetAngle + 0.3)) {
+        speed = speed * 1.15;
+        if (speed > 1.0) speed = 1.0;
         M1FPin.write(1.0);
         M1BPin.write(1.0 - speed);
         M2FPin.write(1.0);
         M2BPin.write(1.0 - speed);
-      } else if (currentAngle < (targetAngle))  {
+      } else if (currentAngle < (targetAngle - 0.3))  {
         M1FPin.write(1.0 - speed);
         M1BPin.write(1.0);
         M2FPin.write(1.0 - speed);
@@ -198,12 +197,11 @@ void loop() {
       // Serial.print("\t");
       // Serial.print(Kd);
       // Serial.print("\t");
-      //Serial.println(speed);
-      Serial.print(lastTurn);
-      Serial.print("\t");
-      Serial.println(turn);
-      //myController.debug(&Serial, "", PRINT_INPUT | PRINT_OUTPUT | PRINT_SETPOINT | PRINT_BIAS | PRINT_P | PRINT_I | PRINT_D );
-
+      // Serial.println(speed);
+      // Serial.print(lastTurn);
+      // Serial.print("\t");
+      // Serial.println(turn);
+      // myController.debug(&Serial, "", PRINT_INPUT | PRINT_OUTPUT | PRINT_SETPOINT | PRINT_BIAS | PRINT_P | PRINT_I | PRINT_D );
     }
     digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
     //Serial.println("Disconnected from central.");
