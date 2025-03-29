@@ -19,7 +19,7 @@ void loop() {
     static double lastTime = millis();
     double dt = (millis() - lastTime) / 1000.0;
     lastTime = millis();
-    gyrox = x * dt + gyrox;
+    gyrox = -1.0 * x * dt + gyrox;
     gyroy = y * dt + gyroy;
     gyroz = z * dt + gyroz;
     Serial.print(gyrox);

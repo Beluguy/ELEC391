@@ -1,5 +1,6 @@
 #include <ArduinoBLE.h>             // Bluetooth
 #include "Arduino_BMI270_BMM150.h"  // IMU
+#include "ArduPID.h"                // PID
 #include "mbed.h"                   // Customer PWM freq
 
 #define BUFFER_SIZE 20
@@ -11,22 +12,17 @@
 #define M2F D7  //Blue:  motor 2
 #define BLE_CHECK_INTERVAL 200
 
-mbed::PwmOut M2BPin(digitalPinToPinName(M2B));
+mbed::PwmOut M2BPin(digitalPinToPinName(M1B));
 mbed::PwmOut M1FPin(digitalPinToPinName(M1F));
-mbed::PwmOut M1BPin(digitalPinToPinName(M1B));
+mbed::PwmOut M1BPin(digitalPinToPinName(M2B));
 mbed::PwmOut M2FPin(digitalPinToPinName(M2F));
 
-//--------------------------PID----------------------------------------------------------
-float Kp = 0.0, Ki = 0.0, Kd = 0.0;
-float pOut = 0.0, iOut = 0.0, dOut = 0.0;
-float currentAngle = 0.0, lastAngle = 0.0, targetAngle = 0.0, currPWM = 0.0, lastPWM = 0.0, currError = 0.0, lastError = 0.0, dt;
-//---------------------------------------------------------------------------------------
+ArduPID myController;
 
-//-------------Comp Angle-------------------------------------------
-float accX, accY, accZ, gyroX, gyroY, gyroZ, kAcc = 0.1, kGyro = 0.9;
-double accAngle, gyroAngle;
-//-------------------------------------------------------------------
+float Kp = 0.0, Ki = 0.0, Kd = 0.0, kAcc = 0.1, kGyro = 0.9;
 int turn = 0, lastTurn = 0;
+double currentAngle = 0.0, targetAngle = 0.0, PWM, dt, accAngle, gyroAngle;
+float accX, accY, accZ, gyroX, gyroY, gyroZ;
 unsigned long loopTime, lastBLECheck = 0;
 bool isConnected, newDataReceived;
 
@@ -72,6 +68,14 @@ void setup() {
     while (1);
   }
   
+  myController.begin(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd);
+
+  myController.setOutputLimits(-255, 255);
+  myController.setWindUpLimits(-255, 255); // Groth bounds for the integral term to prevent integral wind-up
+  //myController.setBias(-10);
+  myController.setSampleTime(1);
+  myController.start();
+
   pinMode(M1F, OUTPUT);
   pinMode(M1B, OUTPUT);
   pinMode(M2F, OUTPUT);
@@ -97,7 +101,7 @@ void loop() {
     lastBLECheck = currentMillis;
     BLE.poll();  // Efficiently handle BLE events
   
-    //----------------------------BLE----------------------------------------
+    //----------------------------ble----------------------------------------
 
     // Wait for a BLE central to connect
     BLEDevice central = BLE.central();
@@ -120,6 +124,7 @@ void loop() {
           memcpy(&Kp, data + 1, 4); // Extract third float
           memcpy(&Ki, data + 5, 4); // Extract fourth float
           memcpy(&Kd, data + 9, 4); // Extract fifth float
+          myController.setCoefficients(Kp, Ki, Kd);
         }
       }
     } else {
@@ -127,7 +132,7 @@ void loop() {
         isConnected = false; 
         digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
       }
-    }
+    }    
     //-----------------------------------------------------------------------
   }
 
@@ -137,65 +142,41 @@ void loop() {
     accAngle = RAD_TO_DEG*atan(accY/accZ);
 
     IMU.readGyroscope(gyroX, gyroY, gyroZ);
-    static unsigned long lastIMUTime = millis();
-    dt = (millis() - lastIMUTime) / 1000.0;
-    lastIMUTime = millis();
+    static unsigned long lastTimeInBLE = millis();
+    dt = (millis() - lastTimeInBLE) / 1000.000;
+    lastTimeInBLE = millis();
     gyroAngle = -1.0 * gyroX * dt + currentAngle;
     //Serial.println(dt,5);
     //Serial.print("\t");
     //Serial.println(loopTime);
 
     currentAngle = kGyro * gyroAngle + kAcc * accAngle ;
-    // Serial.print("Current Angle: ");
-    // Serial.print(currentAngle);
-    // Serial.print("\tgyroAngle: ");
-    // Serial.print(gyroAngle);
-    // Serial.print("\taccAngle: ");
-    // Serial.println(accAngle);
+    Serial.print("Current Angle: ");
+    Serial.print(currentAngle);
+    Serial.print("\tgyroAngle: ");
+    Serial.print(gyroAngle);
+    Serial.print("\taccAngle: ");
+    Serial.println(accAngle);
   }
   //-----------------------------------------------------------
 
   //----------------------PID---------------------------------
-  currError = targetAngle - currentAngle; 
-  double dInput = currentAngle - lastAngle;
+  // if(turn == 10){
+  //   myController.reset();
+  //   delay(200);
+  //   //Serial.println("RESET");
+  //   turn = lastTurn;
+  // }
 
-  // Adjust gains for time interval (dt is in SECONDS)
-  double kiAdjusted = Ki * dt;
-  double kdAdjusted = (dt > 0) ? (Kd / dt) : 0.0; // Avoid division by zero
-
-  // PID terms
-  pOut = Kp * currError;                     
-  dOut = -kdAdjusted * dInput;               // Derivative on measurement
-
-  // Integral term with trapezoidal integration
-  double iTemp = iOut + kiAdjusted * (currError + lastError) / 2.0;
-  iTemp = constrain(iTemp, -1000.0, 1000.0);
-
-  // Calculate unsaturated output (assumes bias = 0)
-  double baseOutput = pOut + dOut;
-
-  // Constrain integral contribution to prevent saturation
-  double iMax = constrain(255.0 - baseOutput, 0.0, 255.0);
-  double iMin = constrain(-255.0 - baseOutput, -255.0, 0.0);
-  iOut = constrain(iTemp, iMin, iMax);
-
-  currPWM = baseOutput + iOut;
-  currPWM = constrain(currPWM, -255.0, 255.0);
-
-  // Update state variables
-  lastAngle = currentAngle;
-  lastError = currError;
-  //---------------------------------------------------------
-
-
+  myController.compute();
   //-----------------------motor control-----------------------
   static float speed;
-  speed = abs(currPWM)/255.0;
+  speed = abs(PWM)/255.0;
   //if (speed < 0.07) speed = 0.07;
 
   if (currentAngle > (targetAngle)) {
-    speed = speed * 1.35;
-    if (speed > 1.0) speed = 1.0;
+    //speed = speed * 1.25;
+    //if (speed > 1.0) speed = 1.0;
     M1FPin.write(1.0);
     M1BPin.write(1.0 - speed);
     M2FPin.write(1.0);
@@ -218,8 +199,9 @@ void loop() {
   // Serial.print("\t");
   // Serial.print(Kd);
   // Serial.print("\t");
-  // Serial.println(speed);
+  //Serial.println(speed);
   // Serial.print(lastTurn);
   // Serial.print("\t");
   // Serial.println(turn);
+  //myController.debug(&Serial, "", PRINT_INPUT | PRINT_OUTPUT | PRINT_SETPOINT | PRINT_BIAS | PRINT_P | PRINT_I | PRINT_D );
 }
