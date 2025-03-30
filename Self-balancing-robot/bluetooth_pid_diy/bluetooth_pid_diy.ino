@@ -23,7 +23,7 @@ float currentAngle = 0.0, lastAngle = 0.0, targetAngle = 0.0, currPWM = 0.0, las
 //---------------------------------------------------------------------------------------
 
 //-------------Comp Angle-------------------------------------------
-float accX, accY, accZ, gyroX, gyroY, gyroZ, kAcc = 0.1, kGyro = 0.9;
+float accX, accY, accZ, gyroX, gyroY, gyroZ, kAcc = 0.05, kGyro = 0.95;
 double accAngle, gyroAngle;
 //-------------------------------------------------------------------
 int turn = 0, lastTurn = 0;
@@ -141,13 +141,13 @@ void loop() {
     dt = (millis() - lastIMUTime) / 1000.0;
     lastIMUTime = millis();
     gyroAngle = -1.0 * gyroX * dt + currentAngle;
-    //Serial.println(dt,5);
+    //Serial.println(dt,6);
     //Serial.print("\t");
     //Serial.println(loopTime);
 
     currentAngle = kGyro * gyroAngle + kAcc * accAngle ;
     // Serial.print("Current Angle: ");
-    // Serial.print(currentAngle);
+    //Serial.println(currentAngle);
     // Serial.print("\tgyroAngle: ");
     // Serial.print(gyroAngle);
     // Serial.print("\taccAngle: ");
@@ -157,30 +157,19 @@ void loop() {
 
   //----------------------PID---------------------------------
   currError = targetAngle - currentAngle; 
-  double dInput = currentAngle - lastAngle;
-
-  // Adjust gains for time interval (dt is in SECONDS)
-  double kiAdjusted = Ki * dt;
-  double kdAdjusted = (dt > 0) ? (Kd / dt) : 0.0; // Avoid division by zero
 
   // PID terms
-  pOut = Kp * currError;                     
-  dOut = -kdAdjusted * dInput;               // Derivative on measurement
+  pOut = Kp * currError;       
+  dOut = -Kd *(currentAngle - lastAngle) / dt;                           
+  iOut += (Ki * dt) * (currError + lastError) / 2.0;   // Integral term with trapezoidal integration
+  static float remainingMax;
+  remainingMax = 1000.0 - (pOut + dOut);              // clamp integral windup
+  static float remainingMin;
+  remainingMin = -1000.0 - (pOut + dOut);             // clamp integral windup
+  iOut = constrain(iOut, remainingMin, remainingMax);  
 
-  // Integral term with trapezoidal integration
-  double iTemp = iOut + kiAdjusted * (currError + lastError) / 2.0;
-  iTemp = constrain(iTemp, -1000.0, 1000.0);
-
-  // Calculate unsaturated output (assumes bias = 0)
-  double baseOutput = pOut + dOut;
-
-  // Constrain integral contribution to prevent saturation
-  double iMax = constrain(255.0 - baseOutput, 0.0, 255.0);
-  double iMin = constrain(-255.0 - baseOutput, -255.0, 0.0);
-  iOut = constrain(iTemp, iMin, iMax);
-
-  currPWM = baseOutput + iOut;
-  currPWM = constrain(currPWM, -255.0, 255.0);
+  currPWM = pOut + dOut + iOut;
+  currPWM = constrain(currPWM, -1000.0, 1000.0);
 
   // Update state variables
   lastAngle = currentAngle;
@@ -190,17 +179,14 @@ void loop() {
 
   //-----------------------motor control-----------------------
   static float speed;
-  speed = abs(currPWM)/255.0;
-  //if (speed < 0.07) speed = 0.07;
+  speed = abs(currPWM) / 1000.0;
 
-  if (currentAngle > (targetAngle)) {
-    speed = speed * 1.35;
-    if (speed > 1.0) speed = 1.0;
+  if (currentAngle > targetAngle) {
     M1FPin.write(1.0);
     M1BPin.write(1.0 - speed);
     M2FPin.write(1.0);
     M2BPin.write(1.0 - speed);
-  } else if (currentAngle < (targetAngle))  {
+  } else if (currentAngle < targetAngle) { 
     M1FPin.write(1.0 - speed);
     M1BPin.write(1.0);
     M2FPin.write(1.0 - speed);
@@ -212,13 +198,13 @@ void loop() {
     M2BPin.write(1.0);
   }
   //--------------------------------------------------------------
-  // Serial.print(Kp);
+  // Serial.print(Kp,5);
   // Serial.print("\t");
-  // Serial.print(Ki);
+  // Serial.print(Ki,5);
   // Serial.print("\t");
-  // Serial.print(Kd);
+  // Serial.print(Kd,5);
   // Serial.print("\t");
-  // Serial.println(speed);
+  // Serial.println(speed,5);
   // Serial.print(lastTurn);
   // Serial.print("\t");
   // Serial.println(turn);
