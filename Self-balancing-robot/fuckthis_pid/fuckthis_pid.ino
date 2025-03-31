@@ -1,6 +1,6 @@
 #include <ArduinoBLE.h>             // Bluetooth
 #include "Arduino_BMI270_BMM150.h"  // IMU
-#include "ArduPID.h"                // PID
+#include <PID_v1.h>                // PID
 //#include <Wire.h>                 // I2C
 //#include <AS5600.h>               // Encoder
 #include "mbed.h"                   // Customer PWM freq
@@ -18,8 +18,6 @@ mbed::PwmOut M1FPin(digitalPinToPinName(M1F));
 mbed::PwmOut M1BPin(digitalPinToPinName(M2B));
 mbed::PwmOut M2FPin(digitalPinToPinName(M2F));
 
-ArduPID myController;
-
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
 int turn = 0;
 double currentAngle = 0.0, targetAngle = 0.0, PWM;
@@ -30,6 +28,9 @@ unsigned long lastBLECheck = 0;
 const int BLE_CHECK_INTERVAL = 200;
 
 bool isConnected, newDataReceived;
+
+//Specify the links and initial tuning parameters
+PID myPID(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd, P_ON_M, DIRECT);
 
 // Define a custom BLE service and characteristic
 BLEService customService("fc096266-ad93-482d-928c-c2560ea93a4e");
@@ -72,12 +73,10 @@ void setup() {
     //Serial.println("Failed to initialize IMU!");
     while (1);
   }
-  myController.begin(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd);
 
-  myController.setOutputLimits(-255, 255);
-  //myController.setWindUpLimits(-100, 100); // Groth bounds for the integral term to prevent integral wind-up
-  //myController.setSampleTime(10);
-  myController.start();
+  myPID.SetOutputLimits(-255, 255);
+  myPID.SetSampleTime(1);
+  myPID.SetMode(AUTOMATIC);
 
   pinMode(M1F, OUTPUT);
   pinMode(M1B, OUTPUT);
@@ -129,7 +128,7 @@ void loop() {
           memcpy(&Kp, data + 1, 4); // Extract third float
           memcpy(&Ki, data + 5, 4); // Extract fourth float
           memcpy(&Kd, data + 9, 4); // Extract fifth float
-          myController.setCoefficients(Kp, Ki, Kd);
+          myPID.SetTunings(Kp, Ki, Kd);
         }
       }
     } else {
@@ -144,55 +143,40 @@ void loop() {
     //-----------------------------------------------------------------------
   }
   //----------------complementary filter------------------------
-  if (IMU.readAcceleration(accX, accY, accZ) && IMU.readGyroscope(gyroX, gyroY, gyroZ)) {
-
-    // Serial.print("gyro xyz: ");
-    // Serial.print(gyroX);
-    // Serial.print("\t");
-    // Serial.print(gyroY);
-    // Serial.print("\t");
-    // Serial.print(gyroZ);
-    // Serial.print("\t");
-    // Serial.print("Acc xyz");
-    // Serial.print(accX);
-    // Serial.print("\t");
-    // Serial.print(accY);
-    // Serial.print("\t");
-    // Serial.println(accZ);
-    //Serial.print("\t");
-    //Serial.println(accAngle);
-
-    static unsigned long lastTime = millis();
-    dt = (millis() - lastTime);
-    lastTime = millis();
-    
-    Serial.println(dt);
-
-    if(accZ < 0.1){
-      accAngle = 0.0;
-      gyroAngle = 0.0;
-    } else {
-      accAngle = RAD_TO_DEG*atan(accY/accZ) + 0.3;
-      gyroAngle = -1.0 * gyroX * dt / 1000.000 + currentAngle;
+  static unsigned long lastTime = millis();
+  if (IMU.gyroscopeAvailable() && IMU.accelerationAvailable()) {
+    if(IMU.readAcceleration(accX, accY, accZ) && IMU.readGyroscope(gyroX, gyroY, gyroZ)){
+      dt = (micros() - lastTime);
+      lastTime = micros();
+      accAngle = RAD_TO_DEG*atan(accY/accZ);
+      gyroAngle = -1.0 * gyroX * (dt / 1000000.000) + currentAngle;
     }
+    
+
+    
+    
+    
+    
+    //Serial.println(dt);
 
     currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
-    // Serial.print("Current Angle: ");
-    // Serial.print(currentAngle);
-    // Serial.print("\t");
-    // Serial.print(gyroAngle);
-    // Serial.print("\t");
-    // Serial.println(accAngle);
+    Serial.print("Current Angle: ");
+    Serial.print(currentAngle);
+    Serial.print("\t");
+    Serial.print(gyroAngle);
+    Serial.print("\t");
+    Serial.println(accAngle);
+    //Serial.println(dt);
   }
   //-----------------------------------------------------------
 
   //----------------------PID---------------------------------
-  myController.compute();
+  myPID.Compute();
 
 
   //-------------------MOTOR-------------------------
   static float speed;
-  speed = abs(PWM)/255.0;
+  speed = fabs(PWM)/255.0;
 
   if (currentAngle > (targetAngle)) {
     M1FPin.write(1.0);
