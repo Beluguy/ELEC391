@@ -17,13 +17,13 @@ mbed::PwmOut M1BPin(digitalPinToPinName(M1B));
 mbed::PwmOut M2FPin(digitalPinToPinName(M2F));
 
 //--------------------------PID----------------------------------------------------------
-float Kp = 0.0, Ki = 0.0, Kd = 0.0;
+float Kp = 70.0, Ki = 1000.0, Kd = 1.5;
 float pOut = 0.0, iOut = 0.0, dOut = 0.0;
 float currentAngle = 0.0, lastAngle = 0.0, targetAngle = 0.0, currPWM = 0.0, lastPWM = 0.0, currError = 0.0, lastError = 0.0, dt;
 //---------------------------------------------------------------------------------------
 
 //-------------Comp Angle-------------------------------------------
-float accX = 0.0, accY = 0.0, accZ = 0.0, gyroX = 0.0, gyroY = 0.0, gyroZ = 0.0, kAcc = 0.1, kGyro = 0.9;
+float accX = 0.0, accY = 0.0, accZ = 0.0, gyroX = 0.0, gyroY = 0.0, gyroZ = 0.0, kAcc = 0.05, kGyro = 0.95;
 double accAngle, gyroAngle;
 //-------------------------------------------------------------------
 int turn = 0, lastTurn = 0;
@@ -176,8 +176,6 @@ void loop() {
   speed = abs(currPWM) / 1000.0;
 
   if (currentAngle > targetAngle && currentAngle < 20.0) {
-    //speed += 0.07;
-    //if (speed > 1.0) speed = 1.0;
     M1FPin.write(1.0);
     M1BPin.write(1.0 - speed);
     M2FPin.write(1.0);
