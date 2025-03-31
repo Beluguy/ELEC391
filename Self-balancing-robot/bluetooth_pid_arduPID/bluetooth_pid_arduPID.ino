@@ -70,8 +70,8 @@ void setup() {
   
   myController.begin(&currentAngle, &PWM, &targetAngle, Kp, Ki, Kd);
 
-  myController.setOutputLimits(-255, 255);
-  myController.setWindUpLimits(-255, 255); // Groth bounds for the integral term to prevent integral wind-up
+  myController.setOutputLimits(-1000, 1000);
+  myController.setWindUpLimits(-1000, 1000); // Groth bounds for the integral term to prevent integral wind-up
   //myController.setBias(-10);
   myController.setSampleTime(1);
   myController.start();
@@ -171,17 +171,17 @@ void loop() {
   myController.compute();
   //-----------------------motor control-----------------------
   static float speed;
-  speed = abs(PWM)/255.0;
+  speed = abs(PWM)/1000.0;
   //if (speed < 0.07) speed = 0.07;
 
-  if (currentAngle > (targetAngle)) {
+  if (currentAngle > (targetAngle + 0.5)) {
     //speed = speed * 1.25;
     //if (speed > 1.0) speed = 1.0;
     M1FPin.write(1.0);
     M1BPin.write(1.0 - speed);
     M2FPin.write(1.0);
     M2BPin.write(1.0 - speed);
-  } else if (currentAngle < (targetAngle))  {
+  } else if (currentAngle < (targetAngle - 0.5))  {
     M1FPin.write(1.0 - speed);
     M1BPin.write(1.0);
     M2FPin.write(1.0 - speed);

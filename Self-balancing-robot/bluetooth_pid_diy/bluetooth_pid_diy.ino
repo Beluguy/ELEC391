@@ -19,7 +19,7 @@ mbed::PwmOut M2FPin(digitalPinToPinName(M2F));
 //--------------------------PID----------------------------------------------------------
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
 float pOut = 0.0, iOut = 0.0, dOut = 0.0;
-float currentAngle = 0.0, lastAngle = 0.0, targetAngle = -0.30, currPWM = 0.0, lastPWM = 0.0, currError = 0.0, lastError = 0.0, dt;
+float currentAngle = 0.0, lastAngle = 0.0, targetAngle = 0.0, currPWM = 0.0, lastPWM = 0.0, currError = 0.0, lastError = 0.0, dt;
 //---------------------------------------------------------------------------------------
 
 //-------------Comp Angle-------------------------------------------
@@ -36,7 +36,7 @@ BLECharacteristic customCharacteristic("9ff0183d-6d83-4d05-a10e-55c142bee2d1", B
 
 
 void setup() {
-  Serial.begin(2000000);
+  //Serial.begin(2000000);
   //while (!Serial);
   //---------------------ble-----------------------------------
   // Initialize the built-in LED to indicate connection status
