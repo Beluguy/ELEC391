@@ -173,7 +173,7 @@ void loop() {
 
   //-----------------------motor control-----------------------
   static float speed;
-  speed = abs(currPWM) / 1000000.0;
+  speed = abs(currPWM) / 1000.0;
 
   if (currentAngle > targetAngle && currentAngle < 20.0) {
     //speed += 0.07;
