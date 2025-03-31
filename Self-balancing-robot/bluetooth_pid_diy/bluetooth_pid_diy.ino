@@ -19,11 +19,11 @@ mbed::PwmOut M2FPin(digitalPinToPinName(M2F));
 //--------------------------PID----------------------------------------------------------
 float Kp = 0.0, Ki = 0.0, Kd = 0.0;
 float pOut = 0.0, iOut = 0.0, dOut = 0.0;
-float currentAngle = 0.0, lastAngle = 0.0, targetAngle = 0.0, currPWM = 0.0, lastPWM = 0.0, currError = 0.0, lastError = 0.0, dt;
+float currentAngle = 0.0, lastAngle = 0.0, targetAngle = -0.30, currPWM = 0.0, lastPWM = 0.0, currError = 0.0, lastError = 0.0, dt;
 //---------------------------------------------------------------------------------------
 
 //-------------Comp Angle-------------------------------------------
-float accX = 0.0, accY = 0.0, accZ = 0.0, gyroX = 0.0, gyroY = 0.0, gyroZ = 0.0, kAcc = 0.05, kGyro = 0.95;
+float accX = 0.0, accY = 0.0, accZ = 0.0, gyroX = 0.0, gyroY = 0.0, gyroZ = 0.0, kAcc = 0.1, kGyro = 0.9;
 double accAngle, gyroAngle;
 //-------------------------------------------------------------------
 int turn = 0, lastTurn = 0;
@@ -125,15 +125,15 @@ void loop() {
   //-----------------------------------------------------------------------
 
   //----------------complementary filter------------------------
-  dt = (micros() - lastIMUTime) / 1000000.0;
-  lastIMUTime = micros();
-  //Serial.println(dt,6);
-  //Serial.print("\t");
-
   if (IMU.accelerationAvailable()) {
     IMU.readAcceleration(accX, accY, accZ);
     accAngle = RAD_TO_DEG * atan(accY/accZ);
   }
+
+  dt = (micros() - lastIMUTime) / 1000000.0;
+  lastIMUTime = micros();
+  //Serial.println(dt,6);
+  //Serial.print("\t");
 
   if (IMU.gyroscopeAvailable()) {
     IMU.readGyroscope(gyroX, gyroY, gyroZ);
@@ -144,9 +144,9 @@ void loop() {
   // Serial.print("Current Angle: ");
   // Serial.print(currentAngle);
   // Serial.print("\tgyroAngle: ");
-  // Serial.print(gyroZ);
+  // Serial.print(gyroAngle);
   // Serial.print("\taccAngle: ");
-  // Serial.print(accAngle);
+  // Serial.println(accAngle);
   //-----------------------------------------------------------
 
   //----------------------PID---------------------------------
