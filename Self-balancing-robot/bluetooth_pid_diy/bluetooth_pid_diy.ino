@@ -36,7 +36,7 @@ BLECharacteristic customCharacteristic("9ff0183d-6d83-4d05-a10e-55c142bee2d1", B
 
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(2000000);
   //while (!Serial);
   //---------------------ble-----------------------------------
   // Initialize the built-in LED to indicate connection status
@@ -83,14 +83,6 @@ void setup() {
 }
 
 void loop() {
-  //Set up loop timer
-  // static unsigned long lastLoopTime = millis();
-  // loopTime = (millis() - lastLoopTime);
-  // lastLoopTime = millis();
-  // Serial.print("LOOP TIME: ");
-  // Serial.print(loopTime);
-  // Serial.print("\t");
-
   unsigned long currentMillis = millis();
   // ---------------- BLE Handling ----------------
   if (currentMillis - lastBLECheck >= BLE_CHECK_INTERVAL) {
@@ -103,7 +95,7 @@ void loop() {
     BLEDevice central = BLE.central();
 
     if (central) {
-      if(!isConnected){
+      if(!isConnected) {
         // Serial.println("Connected to central: ");
         // Serial.println(central.address());
         digitalWrite(LED_BUILTIN, HIGH); // Turn on LED to indicate connection
@@ -123,45 +115,42 @@ void loop() {
         }
       }
     } else {
-      if(isConnected){
+      if(isConnected) {
         isConnected = false; 
         digitalWrite(LED_BUILTIN, LOW); // Turn off LED when disconnected
       }
     }
-    //-----------------------------------------------------------------------
   }
+  //-----------------------------------------------------------------------
 
   //----------------complementary filter------------------------
-  if (IMU.gyroscopeAvailable() && IMU.accelerationAvailable()) {
-    IMU.readAcceleration(accX, accY, accZ);
-    accAngle = RAD_TO_DEG*atan(accY/accZ);
+  static unsigned long lastIMUTime = millis();
+  dt = (millis() - lastIMUTime) / 1000.0;
+  lastIMUTime = millis();
+  //Serial.println(dt,6);
 
-    IMU.readGyroscope(gyroX, gyroY, gyroZ);
-    static unsigned long lastIMUTime = millis();
-    dt = (millis() - lastIMUTime) / 1000.0;
-    lastIMUTime = millis();
-    gyroAngle = -1.0 * gyroX * dt + currentAngle;
-    //Serial.println(dt,6);
-    //Serial.print("\t");
-    //Serial.println(loopTime);
+  IMU.readAcceleration(accX, accY, accZ);
+  accAngle = RAD_TO_DEG*atan(accY/accZ);
 
-    currentAngle = kGyro * gyroAngle + kAcc * accAngle ;
-    // Serial.print("Current Angle: ");
-    //Serial.println(currentAngle);
-    // Serial.print("\tgyroAngle: ");
-    // Serial.print(gyroAngle);
-    // Serial.print("\taccAngle: ");
-    // Serial.println(accAngle);
-  }
+  if (IMU.gyroscopeAvailable()) IMU.readGyroscope(gyroX, gyroY, gyroZ);
+  gyroAngle = -1.0 * gyroX * dt + currentAngle;
+
+  currentAngle = kGyro * gyroAngle + kAcc * accAngle ;
+  Serial.print("Current Angle: ");
+  Serial.print(currentAngle);
+  Serial.print("\tgyroAngle: ");
+  Serial.print(gyroAngle);
+  Serial.print("\taccAngle: ");
+  Serial.print(accAngle);
   //-----------------------------------------------------------
 
   //----------------------PID---------------------------------
   currError = targetAngle - currentAngle; 
 
-  // PID terms
   pOut = Kp * currError;       
   dOut = -Kd *(currentAngle - lastAngle) / dt;                           
   iOut += (Ki * dt) * (currError + lastError) / 2.0;   // Integral term with trapezoidal integration
+
   static float remainingMax;
   remainingMax = 1000.0 - (pOut + dOut);              // clamp integral windup
   static float remainingMin;
@@ -170,23 +159,25 @@ void loop() {
 
   currPWM = pOut + dOut + iOut;
   currPWM = constrain(currPWM, -1000.0, 1000.0);
+  Serial.print("\t");
+  Serial.print(currPWM,5);
 
-  // Update state variables
   lastAngle = currentAngle;
   lastError = currError;
   //---------------------------------------------------------
-
 
   //-----------------------motor control-----------------------
   static float speed;
   speed = abs(currPWM) / 1000.0;
 
-  if (currentAngle > targetAngle) {
+  if (currentAngle > targetAngle && currentAngle < 25.0) {
+    //speed += 0.07;
+    //if (speed > 1.0) speed = 1.0;
     M1FPin.write(1.0);
     M1BPin.write(1.0 - speed);
     M2FPin.write(1.0);
     M2BPin.write(1.0 - speed);
-  } else if (currentAngle < targetAngle) { 
+  } else if (currentAngle < targetAngle && currentAngle > -25.0) { 
     M1FPin.write(1.0 - speed);
     M1BPin.write(1.0);
     M2FPin.write(1.0 - speed);
@@ -203,8 +194,8 @@ void loop() {
   // Serial.print(Ki,5);
   // Serial.print("\t");
   // Serial.print(Kd,5);
-  // Serial.print("\t");
-  // Serial.println(speed,5);
+  Serial.print("\t");
+  Serial.println(speed,5);
   // Serial.print(lastTurn);
   // Serial.print("\t");
   // Serial.println(turn);
