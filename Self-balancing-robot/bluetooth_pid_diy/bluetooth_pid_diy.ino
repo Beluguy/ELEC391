@@ -23,7 +23,7 @@ float currentAngle = 0.0, lastAngle = 0.0, targetAngle = 0.0, currPWM = 0.0, las
 //---------------------------------------------------------------------------------------
 
 //-------------Comp Angle-------------------------------------------
-float accX, accY, accZ, gyroX, gyroY, gyroZ, kAcc = 0.05, kGyro = 0.95;
+float accX = 0.0, accY = 0.0, accZ = 0.0, gyroX = 0.0, gyroY = 0.0, gyroZ = 0.0, kAcc = 0.05, kGyro = 0.95;
 double accAngle, gyroAngle;
 //-------------------------------------------------------------------
 int turn = 0, lastTurn = 0;
@@ -83,6 +83,7 @@ void setup() {
 }
 
 void loop() {
+  static unsigned long lastIMUTime = micros();
   unsigned long currentMillis = millis();
   // ---------------- BLE Handling ----------------
   if (currentMillis - lastBLECheck >= BLE_CHECK_INTERVAL) {
@@ -124,24 +125,28 @@ void loop() {
   //-----------------------------------------------------------------------
 
   //----------------complementary filter------------------------
-  static unsigned long lastIMUTime = millis();
-  dt = (millis() - lastIMUTime) / 1000.0;
-  lastIMUTime = millis();
+  dt = (micros() - lastIMUTime) / 1000000.0;
+  lastIMUTime = micros();
   //Serial.println(dt,6);
+  //Serial.print("\t");
 
-  IMU.readAcceleration(accX, accY, accZ);
-  accAngle = RAD_TO_DEG*atan(accY/accZ);
+  if (IMU.accelerationAvailable()) {
+    IMU.readAcceleration(accX, accY, accZ);
+    accAngle = RAD_TO_DEG * atan(accY/accZ);
+  }
 
-  if (IMU.gyroscopeAvailable()) IMU.readGyroscope(gyroX, gyroY, gyroZ);
-  gyroAngle = -1.0 * gyroX * dt + currentAngle;
+  if (IMU.gyroscopeAvailable()) {
+    IMU.readGyroscope(gyroX, gyroY, gyroZ);
+    gyroAngle = -1.0 * gyroX * dt + currentAngle;
+  } 
 
   currentAngle = kGyro * gyroAngle + kAcc * accAngle ;
-  Serial.print("Current Angle: ");
-  Serial.print(currentAngle);
-  Serial.print("\tgyroAngle: ");
-  Serial.print(gyroAngle);
-  Serial.print("\taccAngle: ");
-  Serial.print(accAngle);
+  // Serial.print("Current Angle: ");
+  // Serial.print(currentAngle);
+  // Serial.print("\tgyroAngle: ");
+  // Serial.print(gyroZ);
+  // Serial.print("\taccAngle: ");
+  // Serial.print(accAngle);
   //-----------------------------------------------------------
 
   //----------------------PID---------------------------------
@@ -159,8 +164,8 @@ void loop() {
 
   currPWM = pOut + dOut + iOut;
   currPWM = constrain(currPWM, -1000.0, 1000.0);
-  Serial.print("\t");
-  Serial.print(currPWM,5);
+  // Serial.print("\t");
+  // Serial.print(currPWM,5);
 
   lastAngle = currentAngle;
   lastError = currError;
@@ -170,14 +175,14 @@ void loop() {
   static float speed;
   speed = abs(currPWM) / 1000.0;
 
-  if (currentAngle > targetAngle && currentAngle < 25.0) {
+  if (currentAngle > targetAngle && currentAngle < 20.0) {
     //speed += 0.07;
     //if (speed > 1.0) speed = 1.0;
     M1FPin.write(1.0);
     M1BPin.write(1.0 - speed);
     M2FPin.write(1.0);
     M2BPin.write(1.0 - speed);
-  } else if (currentAngle < targetAngle && currentAngle > -25.0) { 
+  } else if (currentAngle < targetAngle && currentAngle > -20.0) { 
     M1FPin.write(1.0 - speed);
     M1BPin.write(1.0);
     M2FPin.write(1.0 - speed);
@@ -194,8 +199,8 @@ void loop() {
   // Serial.print(Ki,5);
   // Serial.print("\t");
   // Serial.print(Kd,5);
-  Serial.print("\t");
-  Serial.println(speed,5);
+  // Serial.print("\t");
+  // Serial.println(speed,5);
   // Serial.print(lastTurn);
   // Serial.print("\t");
   // Serial.println(turn);
