@@ -31,7 +31,7 @@ float accX = 0.0, accY = 0.0, accZ = 0.0, gyroX = 0.0, gyroY = 0.0, gyroZ = 0.0;
 double accAngle, gyroAngle;
 
 //kalman
-float kalmanUncertainty;
+float kalmanUncertainty = 4.0;
 
 //CALIBRATION
 float gyroXCal = 0.0, accXCal = 0.0, accYCal = 0.0, accZCal = 0.0;
@@ -93,24 +93,23 @@ void setup() {
   M1BPin.period(1.0/PWM_FREQ);
   M2FPin.period(1.0/PWM_FREQ);
 
- //-----------------ANGLE CALIBRATION--------------------------------
+ //-----------------ANGLE CALIBRATION-------------------------------------
  // set init angle to 0
-  for(int i = 0; i < 1500; i++){
-    if (IMU.readAcceleration(accX, accY, accZ) && IMU.readGyroscope(gyroX, gyroY, gyroZ)) {
-      gyroXCal += gyroX;
-      accXCal += accX;
-      accYCal += accY;
-      accZCal += accZ;
-      delay(0.2);
-    } else {
-      i--;  // Decrement counter to repeat this iteration
-    }
-  }
-  gyroXCal /= 1500;
-  accXCal /= 1500;
-  accYCal /= 1500;
-  accZCal /= 1500;
-  digitalWrite(CAL_LED, HIGH); // Turn on LED to indicate calibration complete
+  // for(int i = 0; i < 1500; i++){
+  //   if (IMU.readAcceleration(accX, accY, accZ) && IMU.readGyroscope(gyroX, gyroY, gyroZ)) {
+  //     gyroXCal += gyroX;
+  //     accXCal += accX;
+  //     accYCal += accY;
+  //     accZCal += accZ;
+  //   } else {
+  //     i--;  // Decrement counter to repeat this iteration
+  //   }
+  // }
+  // gyroXCal /= 1500;
+  // accXCal /= 1500;
+  // accYCal /= 1500;
+  // accZCal /= 1500;
+  // digitalWrite(CAL_LED, HIGH); // Turn on LED to indicate calibration complete
  //-----------------------------------------------------------------------
 }
 
@@ -171,25 +170,21 @@ void loop() {
     lastTime = micros();
     //Serial.println(dt);
 
-    accX -= accXCal;
-    accY -= accYCal;
-    accZ -= accZCal;
-    gyroX -= gyroXCal;
+    // accX -= accXCal;
+    // accY -= accYCal;
+    // accZ -= accZCal;
+    // gyroX -= gyroXCal;
 
-    if(accZ < 0.1){
-      accAngle = 0.0;
-      gyroAngle = 0.0;
-    } else {
-      accAngle = RAD_TO_DEG * atan(accY/(sqrt(accZ*accZ + accX*accX)));
-      gyroAngle = -1.0 * gyroX * dt + currentAngle;
-    }
-    
+    accAngle = RAD_TO_DEG * atan(accY/(sqrt(accZ*accZ + accX*accX)));
+    //gyroAngle = -1.0 * gyroX * dt + currentAngle;
+
+
     currentAngle = currentAngle - dt * gyroX;
-    kalmanUncertainty += dt * dt * GYRO_STD * GYRO_STD;
-
-    float kalGain = kalmanUncertainty / (kalmanUncertainty + ACC_STD * ACC_STD);
-    currentAngle += kalGain*(accAngle - currentAngle);
-    kalmanUncertainty = (1.0 - kalGain) * kalmanUncertainty;
+    kalmanUncertainty += dt * dt * ACC_STD * ACC_STD;
+    
+    float kalGain = kalmanUncertainty / (kalmanUncertainty + GYRO_STD * GYRO_STD);
+    currentAngle += kalGain * (accAngle - currentAngle);  
+    kalmanUncertainty = (1.0 - kalGain) * kalmanUncertainty; 
     
     // Serial.print("Current Angle: ");
     // Serial.print(currentAngle);
