@@ -125,28 +125,29 @@ void loop() {
   //-----------------------------------------------------------------------
 
   //----------------complementary filter------------------------
-  if (IMU.accelerationAvailable()) {
-    IMU.readAcceleration(accX, accY, accZ);
-    accAngle = RAD_TO_DEG * atan(accY/accZ);
+  if (IMU.readAcceleration(accX, accY, accZ) && IMU.readGyroscope(gyroX, gyroY, gyroZ)) {
+      static unsigned long lastTime = micros();
+      dt = (micros() - lastTime) / 1000000.0;
+      lastTime = micros();
+      
+      //Serial.println(dt);
+
+      if(accZ < 0.1){
+        accAngle = 0.0;
+        gyroAngle = 0.0;
+      } else {
+        accAngle = RAD_TO_DEG*atan(accY/accZ);
+        gyroAngle = -1.0 * gyroX * dt + currentAngle;
+      }
+
+      currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
+      Serial.print("Current Angle: ");
+      Serial.print(currentAngle);
+      Serial.print("\t");
+      Serial.print(gyroAngle);
+      Serial.print("\t");
+      Serial.println(accAngle);
   }
-
-  dt = (micros() - lastIMUTime) / 1000000.0;
-  lastIMUTime = micros();
-  //Serial.println(dt,6);
-  //Serial.print("\t");
-
-  if (IMU.gyroscopeAvailable()) {
-    IMU.readGyroscope(gyroX, gyroY, gyroZ);
-    gyroAngle = -1.0 * gyroX * dt + currentAngle;
-  } 
-
-  currentAngle = kGyro * gyroAngle + kAcc * accAngle ;
-  // Serial.print("Current Angle: ");
-  // Serial.print(currentAngle);
-  // Serial.print("\tgyroAngle: ");
-  // Serial.print(gyroAngle);
-  // Serial.print("\taccAngle: ");
-  // Serial.println(accAngle);
   //-----------------------------------------------------------
 
   //----------------------PID---------------------------------
