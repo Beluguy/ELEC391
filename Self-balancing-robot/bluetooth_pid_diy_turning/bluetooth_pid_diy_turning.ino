@@ -11,6 +11,9 @@
 #define M2F D7  //Blue:  motor 2
 #define BLE_CHECK_INTERVAL 200
 
+#define ACC_STD 4
+#define GYRO_STD 3
+
 mbed::PwmOut M2BPin(digitalPinToPinName(M2B));
 mbed::PwmOut M1FPin(digitalPinToPinName(M1F));
 mbed::PwmOut M1BPin(digitalPinToPinName(M1B));
@@ -25,6 +28,13 @@ float currentAngle = 0.0, lastAngle = 0.0, targetAngle = 0.0, currPWM = 0.0, las
 //-------------Comp Angle-------------------------------------------
 float accX = 0.0, accY = 0.0, accZ = 0.0, gyroX = 0.0, gyroY = 0.0, gyroZ = 0.0, kAcc = 0.05, kGyro = 0.95;
 double accAngle, gyroAngle;
+
+//kalman
+float kalmanUncertainty;
+
+//CALIBRATION
+float gyroXCal = 0.0, accXCal = 0.0, accYCal = 0.0, accZCal = 0.0;
+
 //-------------------------------------------------------------------
 int turn = 0; // 0 = balance, 1 = forward, 2 = left, 3 = right, 4 = backward
 unsigned long loopTime, lastBLECheck = 0;
@@ -80,6 +90,24 @@ void setup() {
   M1FPin.period(1.0/PWM_FREQ);
   M1BPin.period(1.0/PWM_FREQ);
   M2FPin.period(1.0/PWM_FREQ);
+
+ //-----------------ANGLE CALIBRATION--------------------------------
+ // set init angle to 0
+  for(int i=0; i < 500; i++){
+    if (IMU.readAcceleration(accX, accY, accZ) && IMU.readGyroscope(gyroX, gyroY, gyroZ)) {
+      gyroXCal += gyroX;
+      accXCal += accX;
+      accYCal += accY;
+      accZCal += accZ;
+    }
+
+  gyroXCal /= 500;
+  accXCal /= 500;
+  accYCal /= 500;
+  accZCal /= 500;
+ }
+ //-----------------------------------------------------------------------
+
 }
 
 void loop() {
@@ -123,6 +151,7 @@ void loop() {
           // Serial.println(targetAngle);
         }
       }
+
     } else {
       if (isConnected) {
         isConnected = false; 
@@ -131,7 +160,43 @@ void loop() {
     }
   }
   //-----------------------------------------------------------------------
+  //---------------------KALMAN FILTER----------------------------------------
 
+  if (IMU.readAcceleration(accX, accY, accZ) && IMU.readGyroscope(gyroX, gyroY, gyroZ)) {
+    static unsigned long lastTime = micros();
+    dt = (micros() - lastTime) / 1000000.0;
+    lastTime = micros();
+
+    accX -= accXCal;
+    accY -= accYCal;
+    accZ -= accZCal;
+    gyroX -= gyroXCal;
+
+
+    if(accZ < 0.1){
+      accAngle = 0.0;
+      gyroAngle = 0.0;
+    } else {
+      accAngle = RAD_TO_DEG*atan(accY/(sqrt(accZ*accZ + accX*accX)));
+      gyroAngle = -1.0 * gyroX * dt + currentAngle;
+    }
+    
+    currentAngle = currentAngle - dt*gyroX;
+    kalmanUncertainty = kalmanUncertainty + dt*dt*GYRO_STD*GYRO_STD;
+    float kalGain = kalmanUncertainty / (kalmanUncertainty + ACC_STD*ACC_STD);
+    currentAngle = currentAngle + kalGain*(accAngle - currentAngle);
+    kalmanUncertainty = (1-kalGain)*kalmanUncertainty;
+    //Serial.println(dt);
+    
+    //Serial.print("Current Angle: ");
+    Serial.print(currentAngle);
+    Serial.print("\t");
+    Serial.print(gyroAngle);
+    Serial.print("\t");
+    Serial.println(accAngle);
+  }
+
+  //--------------------------------------------------------------------------
   //----------------complementary filter------------------------
   // if (IMU.accelerationAvailable()) {
   //   IMU.readAcceleration(accX, accY, accZ);
@@ -150,29 +215,29 @@ void loop() {
 
   // currentAngle = kGyro * gyroAngle + kAcc * accAngle ;
 
-  if (IMU.readAcceleration(accX, accY, accZ) && IMU.readGyroscope(gyroX, gyroY, gyroZ)) {
-    static unsigned long lastTime = micros();
-    dt = (micros() - lastTime) / 1000000.0;
-    lastTime = micros();
+  // if (IMU.readAcceleration(accX, accY, accZ) && IMU.readGyroscope(gyroX, gyroY, gyroZ)) {
+  //   static unsigned long lastTime = micros();
+  //   dt = (micros() - lastTime) / 1000000.0;
+  //   lastTime = micros();
     
-    //Serial.println(dt);
+  //   //Serial.println(dt);
 
-    if(accZ < 0.1){
-      accAngle = 0.0;
-      gyroAngle = 0.0;
-    } else {
-      accAngle = RAD_TO_DEG*atan(accY/accZ);
-      gyroAngle = -1.0 * gyroX * dt + currentAngle;
-    }
+  //   if(accZ < 0.1){
+  //     accAngle = 0.0;
+  //     gyroAngle = 0.0;
+  //   } else {
+  //     accAngle = RAD_TO_DEG*atan(accY/accZ);
+  //     gyroAngle = -1.0 * gyroX * dt + currentAngle;
+  //   }
 
-    currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
-    // Serial.print("Current Angle: ");
-    // Serial.print(currentAngle);
-    // Serial.print("\t");
-    // Serial.print(gyroAngle);
-    // Serial.print("\t");
-    // Serial.println(accAngle);
-  }
+  //   currentAngle = kGyro*(gyroAngle) + kAcc*(accAngle);
+  //   // Serial.print("Current Angle: ");
+  //   // Serial.print(currentAngle);
+  //   // Serial.print("\t");
+  //   // Serial.print(gyroAngle);
+  //   // Serial.print("\t");
+  //   // Serial.println(accAngle);
+  // }
   //-----------------------------------------------------------
 
   //----------------------PID---------------------------------

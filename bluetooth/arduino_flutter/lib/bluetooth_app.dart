@@ -14,6 +14,7 @@ Also used ChatGPT to reference how to transmit float through BLE
 // define UUIDs as constants - these should match the Arduino code
 const String serviceUUID = "fc096266-ad93-482d-928c-c2560ea93a4e";
 const String characteristicUUID = "9ff0183d-6d83-4d05-a10e-55c142bee2d1";
+const double TARGET_ANGLE_INCREMENT = 0.2;
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -27,6 +28,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final _ble = FlutterReactiveBle();
 
+  String turnModeString = 'Balance';
+  double targetAngle = 0;
   double num1 = 0;
   double num2 = 0;
   double num3 = 0;
@@ -167,13 +170,13 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _sendCommand(int turnCommand, double p, double i, double d) async {
     
     if (_writeCharacteristic != null) {
-        final ByteData data = ByteData(13);
+        final ByteData data = ByteData(1);
         //data.setFloat32(0, turn, Endian.little); // First 4 bytes: X-coordinate
         //data.setFloat32(4, forward, Endian.little); // Next 4 bytes: Y-coordinate
         data.setInt8(0, turnCommand);
-        data.setFloat32(1, p, Endian.little); // Next 4 bytes: p
-        data.setFloat32(5, i, Endian.little); // Next 4 bytes: i
-        data.setFloat32(9, d, Endian.little); // Next 4 bytes: d
+        //data.setFloat32(1, p, Endian.little); // Next 4 bytes: p
+        //data.setFloat32(5, i, Endian.little); // Next 4 bytes: i
+        //data.setFloat32(9, d, Endian.little); // Next 4 bytes: d
 
         final List<int> sendData = data.buffer.asUint8List();
       try {
@@ -277,12 +280,15 @@ class _MyHomePageState extends State<MyHomePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                   SizedBox(
-                    width: 40,
-                    height: 40,
+                    width: 70,
+                    height: 70,
                     child: 
                     ElevatedButton(
-                      onPressed:
-                          _isConnected ? () => _sendCommand(1,num1,num2,num3) : null,
+                      onPressed: (){
+                          _isConnected ? () => _sendCommand(1,num1,num2,num3) : null;
+                          //turnModeString = 'Forward';
+                          targetAngle += TARGET_ANGLE_INCREMENT;
+                      },
                       child: const Icon(Icons.arrow_upward),
                     ),
                   )
@@ -294,34 +300,41 @@ class _MyHomePageState extends State<MyHomePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     SizedBox(
-                      width: 40,
-                      height:40,
+                      width: 70,
+                      height:70,
                       child: 
                       ElevatedButton(
-                        onPressed:
-                            _isConnected ? () => _sendCommand(2,num1,num2,num3) : null,
+                        onPressed:(){
+                          _isConnected ? () => _sendCommand(2,num1,num2,num3) : null;
+                          turnModeString = 'Left';
+                        },
+                            
                         child: const Icon(Icons.arrow_back),
                       ),
                    ),
                    const SizedBox(width: 10),
                     SizedBox(
-                      width: 40,
-                      height:40,
+                      width: 70,
+                      height:70,
                       child: 
                       ElevatedButton(
-                        onPressed:
-                            _isConnected ? () => _sendCommand(0,num1,num2,num3) : null,
+                        onPressed:(){
+                          _isConnected ? () => _sendCommand(0,num1,num2,num3) : null;
+                          turnModeString = 'Balance';
+                        },
                         child: const Icon(Icons.stop_outlined),
                       ),
                    ),
                     const SizedBox(width: 10),
                     SizedBox(
-                      width: 40,
-                      height:40,
+                      width: 70,
+                      height:70,
                       child: 
                       ElevatedButton(
-                        onPressed:
-                            _isConnected ? () => _sendCommand(3,num1,num2,num3) : null,
+                        onPressed:(){
+                          _isConnected ? () => _sendCommand(3,num1,num2,num3) : null;
+                          turnModeString = 'Right';
+                        },
                         child: const Icon(Icons.arrow_forward),
                       ),
                    ),
@@ -332,20 +345,33 @@ class _MyHomePageState extends State<MyHomePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     SizedBox(
-                      width: 40,
-                      height: 40,
+                      width: 70,
+                      height: 70,
                       child: 
                       ElevatedButton(
-                        onPressed:
-                            _isConnected ? () => _sendCommand(4,num1,num2,num3) : null,
+                        onPressed:(){
+                          _isConnected ? () => _sendCommand(4,num1,num2,num3) : null;
+                          //turnModeString = 'Back';
+                          targetAngle -= TARGET_ANGLE_INCREMENT;
+                        },
+
                         child: const Icon(Icons.arrow_downward),
                       ),
                    ),
                   ],
                 ), 
+                const SizedBox(height: 20),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Turn Mode: $turnModeString'),
+                    const SizedBox(height: 10),
+                    
+                  ],
+                ), 
                 
-
-                
+                /*
+                //--------------------------------------ADJUSTABLE PID--------------------------------------------------
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -427,8 +453,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     */
                   ],
                 ),
-                
-                
+                //------------------------------------------------------------------------------------------------------------------------------------
+                */
                 
               ],
             ),
