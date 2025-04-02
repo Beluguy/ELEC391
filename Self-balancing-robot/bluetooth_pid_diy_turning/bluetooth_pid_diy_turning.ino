@@ -44,6 +44,7 @@ float kalmanUncertainty = ACC_STD_SQUARED, kalGain;
 //-------------------------------------------------------------------
 
 int length, turn = 0;  // 0 = balance, 1 = forward, 2 = left, 3 = right, 4 = backward
+int lastTurn;
 unsigned long loopTime, lastBLECheck = 0;
 bool isConnected = false;
 
@@ -93,8 +94,7 @@ void setup() {
   //Set up gyroscope
   if (!IMU.begin()) {
     //Serial.println("Failed to initialize IMU!");
-    while (1)
-      ;
+    while (1);
   }
 
   pinMode(M1F, OUTPUT);
@@ -145,10 +145,15 @@ void loop() {
             Ki = 0.0; Kp = 120.0;
           } else if (turn == 0) {
             Kp = 110.0; Ki = 1200;
-            if (currentAngle < -2.0 ) targetAngle = 2.0;
-            else if (currentAngle > 2.0) targetAngle = -2.0;
-            else targetAngle = 0.0;
-          }
+            
+            if(lastTurn == 1){
+              targetAngle = 10.0;
+            } else if (lastTurn == 4){
+              targetAngle= -10.0
+            }
+            
+            targetAngle = 0.0;
+          } 
           // Serial.print(turn);
           // Serial.print("\t");
           // Serial.println(targetAngle);
@@ -277,4 +282,5 @@ void loop() {
   //   maxLoopTime = 0;
   //   minLoopTime = 1e6;
   // }
+  lastTurn = turn;
 }
