@@ -4,7 +4,7 @@
 
 #define BUFFER_SIZE 13
 #define PWM_FREQ 10000.0
-#define PWM_PERIOD = 1.0 / PWM_FREQ
+#define PWM_PERIOD 1.0 / PWM_FREQ
 
 #define M1F D10 //Green: motor 1
 #define M1B D9  //Blue:  motor 1
@@ -90,7 +90,7 @@ void setup() {
   pinMode(M2F, OUTPUT);
   pinMode(M2B, OUTPUT);
   M2BPin.period(PWM_PERIOD);
-  M1FPin.period(PWM_PERIOD;
+  M1FPin.period(PWM_PERIOD);
   M1BPin.period(PWM_PERIOD);
   M2FPin.period(PWM_PERIOD);
 
