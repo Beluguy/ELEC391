@@ -170,13 +170,13 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _sendCommand(int turnCommand, double p, double i, double d) async {
     
     if (_writeCharacteristic != null) {
-        final ByteData data = ByteData(1);
+        final ByteData data = ByteData(13);
         //data.setFloat32(0, turn, Endian.little); // First 4 bytes: X-coordinate
         //data.setFloat32(4, forward, Endian.little); // Next 4 bytes: Y-coordinate
         data.setInt8(0, turnCommand);
-        //data.setFloat32(1, p, Endian.little); // Next 4 bytes: p
-        //data.setFloat32(5, i, Endian.little); // Next 4 bytes: i
-        //data.setFloat32(9, d, Endian.little); // Next 4 bytes: d
+        data.setFloat32(1, p, Endian.little); // Next 4 bytes: p
+        data.setFloat32(5, i, Endian.little); // Next 4 bytes: i
+        data.setFloat32(9, d, Endian.little); // Next 4 bytes: d
 
         final List<int> sendData = data.buffer.asUint8List();
       try {
@@ -285,7 +285,9 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: 
                     ElevatedButton(
                       onPressed: (){
-                          _isConnected ? () => _sendCommand(1,num1,num2,num3) : null;
+                          if(_isConnected){
+                              _sendCommand(1, num1, num2, num3);
+                            }
                           //turnModeString = 'Forward';
                           targetAngle += TARGET_ANGLE_INCREMENT;
                       },
@@ -305,7 +307,9 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: 
                       ElevatedButton(
                         onPressed:(){
-                          _isConnected ? () => _sendCommand(2,num1,num2,num3) : null;
+                          if(_isConnected){
+                              _sendCommand(2, num1, num2, num3);
+                            }
                           turnModeString = 'Left';
                         },
                             
@@ -319,7 +323,9 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: 
                       ElevatedButton(
                         onPressed:(){
-                          _isConnected ? () => _sendCommand(0,num1,num2,num3) : null;
+                          if(_isConnected){
+                              _sendCommand(0, num1, num2, num3);
+                            }
                           turnModeString = 'Balance';
                         },
                         child: const Icon(Icons.stop_outlined),
@@ -332,7 +338,9 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: 
                       ElevatedButton(
                         onPressed:(){
-                          _isConnected ? () => _sendCommand(3,num1,num2,num3) : null;
+                          if(_isConnected){
+                              _sendCommand(3, num1, num2, num3);
+                            }
                           turnModeString = 'Right';
                         },
                         child: const Icon(Icons.arrow_forward),
@@ -350,7 +358,9 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: 
                       ElevatedButton(
                         onPressed:(){
-                          _isConnected ? () => _sendCommand(4,num1,num2,num3) : null;
+                           if(_isConnected){
+                              _sendCommand(4, num1, num2, num3);
+                            }
                           //turnModeString = 'Back';
                           targetAngle -= TARGET_ANGLE_INCREMENT;
                         },
@@ -365,19 +375,19 @@ class _MyHomePageState extends State<MyHomePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text('Turn Mode: $turnModeString'),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 5),
                     
                   ],
                 ), 
                 
-                /*
+                
                 //--------------------------------------ADJUSTABLE PID--------------------------------------------------
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     
                     Text('LAST INPUT: P: $lastInput1, I: $lastInput2, D: $lastInput3'),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 5),
                     Text('CURRENT INPUT: P: $num1, I: $num2, D: $num3'),
  
                     TextFormField(
@@ -454,7 +464,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ],
                 ),
                 //------------------------------------------------------------------------------------------------------------------------------------
-                */
+                
                 
               ],
             ),

@@ -175,7 +175,12 @@ void loop() {
     // accZ -= accZCal;
     // gyroX -= gyroXCal;
 
-    accAngle = RAD_TO_DEG * atan(accY/(sqrt(accZ*accZ + accX*accX)));
+    if(accZ < 0.01){
+      accAngle = 0.0;
+    } else {
+      accAngle = RAD_TO_DEG * atan(accY/(sqrt(accZ*accZ + accX*accX)));
+    }
+    
     //gyroAngle = -1.0 * gyroX * dt + currentAngle;
 
 
@@ -186,8 +191,9 @@ void loop() {
     currentAngle += kalGain * (accAngle - currentAngle);  
     kalmanUncertainty = (1.0 - kalGain) * kalmanUncertainty; 
     
+    
     // Serial.print("Current Angle: ");
-    // Serial.print(currentAngle);
+    // Serial.println(currentAngle);
     // Serial.print("\t");
     // Serial.print(gyroAngle);
     // Serial.print("\t");
