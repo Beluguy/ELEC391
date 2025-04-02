@@ -4,6 +4,7 @@
 
 #define BUFFER_SIZE 13
 #define PWM_FREQ 10000.0
+#define PWM_PERIOD = 1.0 / PWM_FREQ
 
 #define M1F D10 //Green: motor 1
 #define M1B D9  //Blue:  motor 1
@@ -14,6 +15,8 @@
 
 #define ACC_STD 0.25
 #define GYRO_STD 0.174
+#define GYRO_STD_SQUARED GYRO_STD * GYRO_STD
+#define ACC_STD_SQUARED ACC_STD * ACC_STD
 
 mbed::PwmOut M2BPin(digitalPinToPinName(M2B));
 mbed::PwmOut M1FPin(digitalPinToPinName(M1F));
@@ -30,12 +33,12 @@ float currentAngle = 0.0, lastAngle = 0.0, targetAngle = 0.0, currPWM = 0.0, las
 float accX = 0.0, accY = 0.0, accZ = 0.0, gyroX = 0.0, gyroY = 0.0, gyroZ = 0.0;
 double accAngle, gyroAngle;
 
-float kalmanUncertainty = ACC_STD * ACC_STD, kalGain;
+float kalmanUncertainty = ACC_STD_SQUARED, kalGain;
 
 float gyroXCal = 0.0, accXCal = 0.0, accYCal = 0.0, accZCal = 0.0; //CALIBRATION
 //-------------------------------------------------------------------
 
-int turn = 0; // 0 = balance, 1 = forward, 2 = left, 3 = right, 4 = backward
+int length, turn = 0; // 0 = balance, 1 = forward, 2 = left, 3 = right, 4 = backward
 unsigned long loopTime, lastBLECheck = 0;
 bool isConnected = false;
 
@@ -86,10 +89,10 @@ void setup() {
   pinMode(M1B, OUTPUT);
   pinMode(M2F, OUTPUT);
   pinMode(M2B, OUTPUT);
-  M2BPin.period(1.0/PWM_FREQ);
-  M1FPin.period(1.0/PWM_FREQ);
-  M1BPin.period(1.0/PWM_FREQ);
-  M2FPin.period(1.0/PWM_FREQ);
+  M2BPin.period(PWM_PERIOD);
+  M1FPin.period(PWM_PERIOD;
+  M1BPin.period(PWM_PERIOD);
+  M2FPin.period(PWM_PERIOD);
 
   //-----------------ANGLE CALIBRATION-------------------------------------
   //set init angle to 0
@@ -131,7 +134,7 @@ void loop() {
         //Kp = 110.0; Ki = 1200; Kd = 0.9; 
       }
       if (customCharacteristic.written()) {
-      int length = customCharacteristic.valueLength();
+      length = customCharacteristic.valueLength();
       
         if (length == 13) {
           static uint8_t data[13];
@@ -179,9 +182,9 @@ void loop() {
     accAngle = RAD_TO_DEG * atan(accY / sqrt(accZ * accZ + accX * accX));
 
     currentAngle = currentAngle - dt * gyroX; // Prediction of current angle
-    kalmanUncertainty = kalmanUncertainty + dt * dt * GYRO_STD * GYRO_STD; // Uncertainty of the prediction 
+    kalmanUncertainty = kalmanUncertainty + dt * dt * GYRO_STD_SQUARED; // Uncertainty of the prediction 
     
-    kalGain = kalmanUncertainty / (kalmanUncertainty + ACC_STD * ACC_STD);
+    kalGain = kalmanUncertainty / (kalmanUncertainty + ACC_STD_SQUARED);
     currentAngle = currentAngle + kalGain * (accAngle - currentAngle);  // New angle predicton 
 
     kalmanUncertainty = (1.0 - kalGain) * kalmanUncertainty; // Calculate new uncertainty
