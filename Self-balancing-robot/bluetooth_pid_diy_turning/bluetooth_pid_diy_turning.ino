@@ -12,8 +12,8 @@
 #define BLE_CHECK_INTERVAL 200
 #define CAL_LED D11 // This LED will turn on when the IMU calibraiton is completed
 
-#define ACC_STD 3
-#define GYRO_STD 4
+#define ACC_STD 4
+#define GYRO_STD 3
 
 mbed::PwmOut M2BPin(digitalPinToPinName(M2B));
 mbed::PwmOut M1FPin(digitalPinToPinName(M1F));
@@ -26,15 +26,13 @@ float pOut = 0.0, iOut = 0.0, dOut = 0.0;
 float currentAngle = 0.0, lastAngle = 0.0, targetAngle = 0.0, currPWM = 0.0, lastPWM = 0.0, currError = 0.0, lastError = 0.0, dt;
 //---------------------------------------------------------------------------------------
 
-//-------------Comp Angle-------------------------------------------
+//-------------Kalman Filter-------------------------------------------
 float accX = 0.0, accY = 0.0, accZ = 0.0, gyroX = 0.0, gyroY = 0.0, gyroZ = 0.0;
 double accAngle, gyroAngle;
 
-//kalman
-float kalmanUncertainty = 4.0;
+float kalmanUncertainty = ACC_STD * ACC_STD;
 
-//CALIBRATION
-float gyroXCal = 0.0, accXCal = 0.0, accYCal = 0.0, accZCal = 0.0;
+float gyroXCal = 0.0, accXCal = 0.0, accYCal = 0.0, accZCal = 0.0; //CALIBRATION
 //-------------------------------------------------------------------
 
 int turn = 0; // 0 = balance, 1 = forward, 2 = left, 3 = right, 4 = backward
@@ -93,22 +91,23 @@ void setup() {
   M1BPin.period(1.0/PWM_FREQ);
   M2FPin.period(1.0/PWM_FREQ);
 
- //-----------------ANGLE CALIBRATION-------------------------------------
-  // set init angle to 0
-//   for(int i = 0; i < 1500; i++){
-//     if (IMU.readAcceleration(accX, accY, accZ) && IMU.readGyroscope(gyroX, gyroY, gyroZ)) {
-//       gyroXCal += gyroX;
-//       accXCal += accX;
-//       accYCal += accY;
-//       accZCal += accZ;
-//     } else {
-//       i--;  // Decrement counter to repeat this iteration
-//     }
-//   }
-//   gyroXCal /= 1500;
-//   // accXCal /= 1500;
-//   // accYCal /= 1500;
-//   // accZCal /= 1500;
+  //-----------------ANGLE CALIBRATION-------------------------------------
+  //set init angle to 0
+  for(int i = 0; i < 1500; i++){
+    if (IMU.readAcceleration(accX, accY, accZ) && IMU.readGyroscope(gyroX, gyroY, gyroZ)) {
+      gyroXCal += gyroX;
+      accXCal += accX;
+      accYCal += accY;
+      accZCal += accZ;
+      delay(0.5);
+    } else {
+      i--;  // Decrement counter to repeat this iteration
+    }
+  }
+  gyroXCal /= 1500;
+  accXCal /= 1500;
+  accYCal /= 1500;
+  accZCal = accZCal / 1500 - 1.0;
   digitalWrite(CAL_LED, HIGH); // Turn on LED to indicate calibration complete
  //-----------------------------------------------------------------------
 }
@@ -170,25 +169,33 @@ void loop() {
     lastTime = micros();
     //Serial.println(dt);
 
-    // accX -= accXCal;
-    // accY -= accYCal;
-    // accZ -= accZCal;
-    // gyroX -= gyroXCal;
+    accX -= accXCal;
+    accY -= accYCal;
+    accZ -= accZCal;
+    gyroX -= gyroXCal;
 
-    accAngle = RAD_TO_DEG * atan(accY/(sqrt(accZ*accZ + accX*accX)));
-    //gyroAngle = -1.0 * gyroX * dt + currentAngle;
+    accAngle = RAD_TO_DEG * atan(accY / sqrt(accZ * accZ + accX * accX));
 
-    currentAngle = currentAngle - dt * gyroX;
-    kalmanUncertainty += dt * dt * ACC_STD * ACC_STD;
+    currentAngle = currentAngle - dt * gyroX; // Prediction of current angle
+    kalmanUncertainty = kalmanUncertainty + dt * dt * GYRO_STD * GYRO_STD; // Uncertainty of the prediction 
     
-    float kalGain = kalmanUncertainty / (kalmanUncertainty + GYRO_STD * GYRO_STD);
-    currentAngle += kalGain * (accAngle - currentAngle);  
-    kalmanUncertainty = (1.0 - kalGain) * kalmanUncertainty; 
+    float kalGain = kalmanUncertainty / (kalmanUncertainty + ACC_STD * ACC_STD);
+    currentAngle = currentAngle + kalGain * (accAngle - currentAngle);  // New angle predicton 
+
+    kalmanUncertainty = (1.0 - kalGain) * kalmanUncertainty; // Calculate new uncertainty
     
     // Serial.print("Current Angle: ");
-    Serial.println(currentAngle);
+    // Serial.print(accX);
     // Serial.print("\t");
-    // Serial.print(gyroAngle);
+    // Serial.print(accY);
+    // Serial.print("\t");
+    // Serial.print(accZ);
+    // Serial.print("\t");
+    // Serial.print(gyroXCal);
+    // Serial.print("\t");
+    // Serial.print(currentAngle);
+    // Serial.print("\t");
+    // Serial.print(gyroX);
     // Serial.print("\t");
     // Serial.println(accAngle);
   }
@@ -209,9 +216,9 @@ void loop() {
 
   currPWM = pOut + dOut + iOut;
   currPWM = constrain(currPWM, -1000.0, 1000.0);
-  // Serial.print(dOut,5);
-  // Serial.print("\t");
-  // Serial.println(iOut,5);
+  Serial.print(dOut,5);
+  Serial.print("\t");
+  Serial.println(iOut,5);
 
   lastAngle = currentAngle;
   lastError = currError;
@@ -221,12 +228,12 @@ void loop() {
   static float speed;
   speed = abs(currPWM) / 1000.0;
 
-  if (currentAngle > targetAngle && currentAngle < 20.0) {
+  if (currentAngle > targetAngle && currentAngle < 16.0) {
     M1FPin.write(1.0);
     M1BPin.write(1.0 - speed);
     M2FPin.write(1.0);
     M2BPin.write(1.0 - speed);
-  } else if (currentAngle < targetAngle && currentAngle > -20.0) { 
+  } else if (currentAngle < targetAngle && currentAngle > -16.0) { 
     M1FPin.write(1.0 - speed);
     M1BPin.write(1.0);
     M2FPin.write(1.0 - speed);
