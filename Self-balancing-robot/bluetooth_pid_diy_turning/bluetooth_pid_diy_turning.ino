@@ -2,26 +2,33 @@
 #include "Arduino_BMI270_BMM150.h"  // IMU
 #include "mbed.h"                   // Customer PWM freq
 
+// BLE constants
 #define BUFFER_SIZE 13
-#define PWM_FREQ 10000.0
-#define PWM_PERIOD 1.0 / PWM_FREQ
+#define BLE_CHECK_INTERVAL 100
 
-#define M1F D10 //Green: motor 1
-#define M1B D9  //Blue:  motor 1
-#define M2B D8  //Green: motor 2
-#define M2F D7  //Blue:  motor 2
-#define BLE_CHECK_INTERVAL 200
-#define CAL_LED D11 // This LED will turn on when the IMU calibraiton is completed
+// IMU Calibration constants
+#define gyroXCal -0.65
+#define accXCal 0.02
+#define accYCal -0.01
+#define accZCal 0.011
 
+// Kalman Filter constants
 #define ACC_STD 0.25
 #define GYRO_STD 0.174
 #define GYRO_STD_SQUARED GYRO_STD * GYRO_STD
 #define ACC_STD_SQUARED ACC_STD * ACC_STD
 
+// Motor constants & init
+#define M1F D10 //Green: motor 1
+#define M1B D9  //Blue:  motor 1
+#define M2B D8  //Green: motor 2
+#define M2F D7  //Blue:  motor 2
 mbed::PwmOut M2BPin(digitalPinToPinName(M2B));
 mbed::PwmOut M1FPin(digitalPinToPinName(M1F));
 mbed::PwmOut M1BPin(digitalPinToPinName(M1B));
 mbed::PwmOut M2FPin(digitalPinToPinName(M2F));
+#define PWM_FREQ 10000.0
+#define PWM_PERIOD 1.0 / PWM_FREQ
 
 //--------------------------PID----------------------------------------------------------
 float Kp = 0.0, Ki = 0.0, Kd = 0.0, remainingMax, remainingMin;
@@ -34,8 +41,6 @@ float accX = 0.0, accY = 0.0, accZ = 0.0, gyroX = 0.0, gyroY = 0.0, gyroZ = 0.0;
 double accAngle, gyroAngle;
 
 float kalmanUncertainty = ACC_STD_SQUARED, kalGain;
-
-float gyroXCal = 0.0, accXCal = 0.0, accYCal = 0.0, accZCal = 0.0; //CALIBRATION
 //-------------------------------------------------------------------
 
 int length, turn = 0; // 0 = balance, 1 = forward, 2 = left, 3 = right, 4 = backward
@@ -47,13 +52,19 @@ BLEService customService("fc096266-ad93-482d-928c-c2560ea93a4e");
 BLECharacteristic customCharacteristic("9ff0183d-6d83-4d05-a10e-55c142bee2d1", BLERead | BLEWrite | BLENotify, BUFFER_SIZE, false);
 
 
+unsigned long maxLoopTime = 0;
+unsigned long minLoopTime = 1e6; // Initialize with a large value
+unsigned long totalLoopTime = 0;
+int loopCount = 0;
+#define PRINT_INTERVAL 2000 // Print every 2000 loops
+
+
 void setup() {
-  //Serial.begin(2000000);
+  Serial.begin(2000000);
   //while (!Serial);
   //---------------------ble-----------------------------------
   // Initialize the built-in LED to indicate connection status
   pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(CAL_LED, OUTPUT);
 
   if (!BLE.begin()) {
     //Serial.println("Starting BLE failed!");
@@ -79,7 +90,7 @@ void setup() {
   // Serial.println("Bluetooth® device active, waiting for connections...");
   //----------------------------------------------------------------------
 
-  //Set up gyroscope and pid
+  //Set up gyroscope
   if (!IMU.begin()) {
     //Serial.println("Failed to initialize IMU!");
     while (1);
@@ -93,29 +104,11 @@ void setup() {
   M1FPin.period(PWM_PERIOD);
   M1BPin.period(PWM_PERIOD);
   M2FPin.period(PWM_PERIOD);
-
-  //-----------------ANGLE CALIBRATION-------------------------------------
-  //set init angle to 0
-  for(int i = 0; i < 1500; i++){
-    if (IMU.readAcceleration(accX, accY, accZ) && IMU.readGyroscope(gyroX, gyroY, gyroZ)) {
-      gyroXCal += gyroX;
-      accXCal += accX;
-      accYCal += accY;
-      accZCal += accZ;
-      delay(0.5);
-    } else {
-      i--;  // Decrement counter to repeat this iteration
-    }
-  }
-  gyroXCal /= 1500;
-  accXCal /= 1500;
-  accYCal /= 1500;
-  accZCal = accZCal / 1500 - 1.0;
-  digitalWrite(CAL_LED, HIGH); // Turn on LED to indicate calibration complete
- //-----------------------------------------------------------------------
 }
 
 void loop() {
+  unsigned long start = micros();
+
   unsigned long currentMillis = millis();
   // ---------------- BLE Handling ----------------
   if (currentMillis - lastBLECheck >= BLE_CHECK_INTERVAL) {
@@ -144,8 +137,8 @@ void loop() {
           memcpy(&Ki, data + 5, 4); // Extract fourth float
           memcpy(&Kd, data + 9, 4); // Extract fifth float
 
-          if (turn == 1) targetAngle += 0.2;
-          else if (turn == 4) targetAngle -= 0.2;
+          if (turn == 1) targetAngle += 0.5;
+          else if (turn == 4) targetAngle -= 0.5;
           else if (turn == 0) targetAngle = 0.0;
 
           // Serial.print(turn);
@@ -248,4 +241,28 @@ void loop() {
     M2BPin.write(1.0);
   }
   //--------------------------------------------------------------
+
+  unsigned long elapsed = micros() - start;
+  totalLoopTime += elapsed;
+  loopCount++;
+
+  // Update min/max
+  if (elapsed > maxLoopTime) maxLoopTime = elapsed;
+  if (elapsed < minLoopTime) minLoopTime = elapsed;
+
+  // Print stats
+  if (loopCount >= PRINT_INTERVAL) {
+    float avg = (totalLoopTime / 1000.0) / loopCount;
+    Serial.print(avg);
+    Serial.print("\t");
+    Serial.print(minLoopTime / 1000.0);
+    Serial.print("\t");
+    Serial.println(maxLoopTime / 1000.0);
+
+    // Reset
+    totalLoopTime = 0;
+    loopCount = 0;
+    maxLoopTime = 0;
+    minLoopTime = 1e6;
+  }
 }
