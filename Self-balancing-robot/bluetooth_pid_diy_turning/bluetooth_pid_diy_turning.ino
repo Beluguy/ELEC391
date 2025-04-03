@@ -31,7 +31,7 @@ mbed::PwmOut M2FPin(digitalPinToPinName(M2F));
 #define PWM_PERIOD 1.0 / PWM_FREQ
 
 //----------------------------------------------------------------PID-------------------------------------------------------------------
-float Kp = 0.0, Ki = 0.0, Kd = 0.0, remainingMax, remainingMin;
+float Kp = 0.0, Ki = 0.0, Kd = 0.0, remainingMax, remainingMin, bias;
 float pOut = 0.0, iOut = 0.0, dOut = 0.0;
 float currentAngle = 0.0, targetAngle = 0.0, lastAngle = 0.0, currPWM = 0.0, lastPWM = 0.0, currError = 0.0, lastError = 0.0, dt, speed;
 //--------------------------------------------------------------------------------------------------------------------------------------
@@ -127,7 +127,7 @@ void loop() {
         // Serial.println(central.address());
         digitalWrite(LED_BUILTIN, HIGH);  // Turn on LED to indicate connection
         isConnected = true;
-        Kp = 110.0; Ki = 1200; Kd = 1.9;
+        Kp = 110.0; Ki = 1300; Kd = 1.6;
       }
       if (customCharacteristic.written()) {
         length = customCharacteristic.valueLength();
@@ -154,16 +154,17 @@ void loop() {
 
   //-----------------direction control---------------------
   if (turn == 1) {
-    targetAngle = 0.3;
-    Ki = 0.0; Kp = 120.0;
+    targetAngle = 0.5;
+    Ki = 0.0; Kp = 140.0;
   } else if (turn == 4) {
-    targetAngle = -0.3;
-    Ki = 0.0; Kp = 120.0;
-  } else if (turn == 0) {
-    Kp = 110.0; Ki = 1200;
-    if (lastTurn == 1) targetAngle = -3.0;
-    else if (lastTurn == 4) targetAngle = 3.0;
-    else targetAngle = 0.0;
+    targetAngle = -0.5;
+    Ki = 0.0; Kp = 140.0;
+  } else if (turn == 0 && isConnected) {
+    Kp = 110.0; Ki = 1300; Kd = 1.6;
+    targetAngle *= 0.99;
+    //if (lastTurn == 1) targetAngle = -3.0;
+    //else if (lastTurn == 4) targetAngle = 3.0;
+    //else targetAngle = 0.0;
   } 
   //-------------------------------------------------------
 
@@ -198,7 +199,7 @@ void loop() {
     // Serial.print("\tKi: ");
     // Serial.print(Ki);
     // Serial.print("\tKd: ");
-    // Serial.print(Kd);
+    // Serial.println(Kd);
 
     // Serial.print(accX);
     // Serial.print("\t");
