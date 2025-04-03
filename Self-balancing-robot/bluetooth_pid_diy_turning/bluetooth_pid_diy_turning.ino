@@ -4,7 +4,7 @@
 
 // BLE constants
 #define BUFFER_SIZE 13
-#define BLE_CHECK_INTERVAL 100
+#define BLE_CHECK_INTERVAL 50
 
 // IMU Calibration constants
 #define gyroXCal -0.65
@@ -15,8 +15,8 @@
 // Kalman Filter constants
 #define ACC_STD 0.25
 #define GYRO_STD 0.174
-#define GYRO_STD_SQUARED GYRO_STD* GYRO_STD
-#define ACC_STD_SQUARED ACC_STD* ACC_STD
+#define GYRO_STD_SQUARED GYRO_STD * GYRO_STD
+#define ACC_STD_SQUARED ACC_STD * ACC_STD
 
 // Motor constants & init
 #define M1F D10  //Green: motor 1
@@ -30,37 +30,40 @@ mbed::PwmOut M2FPin(digitalPinToPinName(M2F));
 #define PWM_FREQ 10000.0
 #define PWM_PERIOD 1.0 / PWM_FREQ
 
-//--------------------------PID----------------------------------------------------------
+//----------------------------------------------------------------PID-------------------------------------------------------------------
 float Kp = 0.0, Ki = 0.0, Kd = 0.0, remainingMax, remainingMin;
 float pOut = 0.0, iOut = 0.0, dOut = 0.0;
-float currentAngle = 0.0, lastAngle = 0.0, targetAngle = 0.0, currPWM = 0.0, lastPWM = 0.0, currError = 0.0, lastError = 0.0, dt, speed;
-//---------------------------------------------------------------------------------------
+float currentAngle = 0.0, targetAngle = 0.0, currPWM = 0.0, lastPWM = 0.0, currError = 0.0, lastError = 0.0, dt, speed;
+//--------------------------------------------------------------------------------------------------------------------------------------
 
-//-------------Kalman Filter-------------------------------------------
+//------------------------------Kalman Filter-----------------------------------
 float accX = 0.0, accY = 0.0, accZ = 0.0, gyroX = 0.0, gyroY = 0.0, gyroZ = 0.0;
 double accAngle, gyroAngle;
-
 float kalmanUncertainty = ACC_STD_SQUARED, kalGain;
-//-------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
-int length, turn = 0;  // 0 = balance, 1 = forward, 2 = left, 3 = right, 4 = backward
-int lastTurn;
-unsigned long loopTime, lastBLECheck = 0;
-bool isConnected = false;
+//-----------------------------direction & turning -----------------------------------
+int length, lastTurn = 0, turn = 0;  // 0 = balance, 1 = forward, 2 = left, 3 = right, 4 = backward
+//------------------------------------------------------------------------------------
 
+//--------------------------------------BLE-----------------------------------------
 // Define a custom BLE service and characteristic
 BLEService customService("fc096266-ad93-482d-928c-c2560ea93a4e");
 BLECharacteristic customCharacteristic("9ff0183d-6d83-4d05-a10e-55c142bee2d1", BLERead | BLEWrite | BLENotify, BUFFER_SIZE, false);
+unsigned long lastBLECheck = 0, currentMillis;
+bool isConnected = false;
+//----------------------------------------------------------------------------------
 
+//-----------------------Finding loop time---------------------------
 // unsigned long maxLoopTime = 0;
 // unsigned long minLoopTime = 1e6; // Initialize with a large value
 // unsigned long totalLoopTime = 0;
 // int loopCount = 0;
 // #define PRINT_INTERVAL 2000 // Print every 2000 loops
-
+//-------------------------------------------------------------------
 
 void setup() {
-  Serial.begin(2000000);
+  //Serial.begin(2000000);
   //while (!Serial);
   //---------------------ble-----------------------------------
   // Initialize the built-in LED to indicate connection status
@@ -68,8 +71,7 @@ void setup() {
 
   if (!BLE.begin()) {
     //Serial.println("Starting BLE failed!");
-    while (1)
-      ;
+    while (1);
   }
 
   // Set the device name and local name
@@ -109,8 +111,8 @@ void setup() {
 
 void loop() {
   // unsigned long start = micros();
-  unsigned long currentMillis = millis();
-  // ---------------- BLE Handling ----------------
+  currentMillis = millis();
+  // ---------------- BLE Handling ---------------------------------------------
   if (currentMillis - lastBLECheck >= BLE_CHECK_INTERVAL) {
     lastBLECheck = currentMillis;
     BLE.poll();  // Efficiently handle BLE events
@@ -124,7 +126,7 @@ void loop() {
         // Serial.println(central.address());
         digitalWrite(LED_BUILTIN, HIGH);  // Turn on LED to indicate connection
         isConnected = true;
-        Kp = 110.0; Ki = 1200; Kd = 1.9;
+        //Kp = 110.0; Ki = 1200; Kd = 1.9;
       }
       if (customCharacteristic.written()) {
         length = customCharacteristic.valueLength();
@@ -137,30 +139,18 @@ void loop() {
           memcpy(&Ki, data + 5, 4);  // Extract fourth float
           memcpy(&Kd, data + 9, 4);  // Extract fifth float
 
-          if (turn == 1) {
-            targetAngle = 0.5;
-            Ki = 0.0; Kp = 120.0;
-          } else if (turn == 4) {
-            targetAngle = -0.5;
-            Ki = 0.0; Kp = 120.0;
-          } else if (turn == 0) {
-            Kp = 110.0; Ki = 1200;
-            
-            if(lastTurn == 1){
-              targetAngle = 10.0;
-            } else if (lastTurn == 4){
-              targetAngle= -10.0
-            }
-            
-            targetAngle = 0.0;
-          } 
-          // Serial.print(turn);
-          // Serial.print("\t");
-          // Serial.println(targetAngle);
-
-          // if (turn == 1) bias += 5.0;
-          // else if (turn == 4) bias -= 5.0;
-          // else if (!turn) bias = 0.0;
+          // if (turn == 1) {
+          //   targetAngle = 0.5;
+          //   Ki = 0.0; Kp = 120.0;
+          // } else if (turn == 4) {
+          //   targetAngle = -0.5;
+          //   Ki = 0.0; Kp = 120.0;
+          // } else if (turn == 0) {
+          //   //Kp = 110.0; Ki = 1200;
+          //   if (lastTurn == 1) targetAngle = -5.0;
+          //   else if (lastTurn == 4) targetAngle= 5.0;
+          //   else targetAngle = 0.0;
+          // } 
         }
       }
     } else {
@@ -174,7 +164,7 @@ void loop() {
       }
     }
   }
-  //-----------------------------------------------------------------------
+  //---------------------------------------------------------------------------------
 
   //---------------------KALMAN FILTER----------------------------------------------------
   if (IMU.readAcceleration(accX, accY, accZ) && IMU.readGyroscope(gyroX, gyroY, gyroZ)) {
@@ -192,12 +182,18 @@ void loop() {
 
     currentAngle = currentAngle - dt * gyroX;                            // Prediction of current angle
     kalmanUncertainty = kalmanUncertainty + dt * dt * GYRO_STD_SQUARED;  // Uncertainty of the prediction
-
-
-    kalGain = kalmanUncertainty / (kalmanUncertainty + ACC_STD_SQUARED);
+    kalGain = kalmanUncertainty / (kalmanUncertainty + ACC_STD_SQUARED); // Get Kalman gain for the next line
     currentAngle = currentAngle + kalGain * (accAngle - currentAngle);  // New angle predicton
-
     kalmanUncertainty = (1.0 - kalGain) * kalmanUncertainty;  // Calculate new uncertainty
+
+    // Serial.print("turn:");
+    // Serial.print(turn);
+    // Serial.print("\tKp: ");
+    // Serial.print(Kp);
+    // Serial.print("\tKi: ");
+    // Serial.print(Ki);
+    // Serial.print("\tKd: ");
+    // Serial.print(Kd);
 
     // Serial.print(accX);
     // Serial.print("\t");
@@ -208,8 +204,8 @@ void loop() {
     // Serial.print(gyroX);
     // Serial.print("\t");
     // Serial.print(accAngle);
-    // Serial.print("\t");
-    // Serial.println(currentAngle);
+    // Serial.print("\tCurrentAngle: ");
+    Serial.println(currentAngle);
   }
   //--------------------------------------------------------------------------------------
 
@@ -217,27 +213,31 @@ void loop() {
   currError = targetAngle - currentAngle;
 
   pOut = Kp * currError;
-  dOut = -Kd * (currentAngle - lastAngle) / dt;
-  iOut += (Ki * dt) * (currError + lastError) / 2.0;  // Integral term with trapezoidal integration
+  dOut = -Kd * (currError - lastError) / dt;
+  if (Ki != 0.0) { // to ensure iOut = 0 when Ki is 0 
+    iOut += (Ki * dt) * (currError + lastError) / 2.0;
+    remainingMax = 1000.0 - (pOut + dOut);
+    remainingMin = -1000.0 - (pOut + dOut);
+    iOut = constrain(iOut, remainingMin, remainingMax);
+  } else iOut = 0.0; // Explicitly zero out the integral term
 
-  remainingMax = 1000.0 - (pOut + dOut);   // clamp integral windup
-  remainingMin = -1000.0 - (pOut + dOut);  // clamp integral windup
-  iOut = constrain(iOut, remainingMin, remainingMax);
-  //if (abs(iOut) < 5.0) iOut = 0.0;
+  currPWM = constrain(pOut + dOut + iOut, -1000.0, 1000.0);
 
-  currPWM = pOut + dOut + iOut;
-  // currPWM = constrain(currPWM, -1000.0, 1000.0);
-  // Serial.println(currPWM,5);
+  // Serial.print(remainingMax,5);
   // Serial.print("\t");
+  // Serial.print(remainingMin,5);
+  // Serial.print("\tCurrPWM: ");
+  // Serial.print(currPWM,5);
+  // Serial.print("\tdOut: ");
   // Serial.print(dOut,5);
-  // Serial.print("\t");
+  // Serial.print("\tiOut: ");
   // Serial.println(iOut,5);
 
-  lastAngle = currentAngle;
   lastError = currError;
   //---------------------------------------------------------
 
   //-----------------------motor control-----------------------
+  //speed = constrain(abs(currPWM) / 1000.0, 0.05, 1.0);
   speed = abs(currPWM) / 1000.0;
   // Serial.println(speed,5);
 
