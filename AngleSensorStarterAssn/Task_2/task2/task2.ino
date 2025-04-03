@@ -12,12 +12,16 @@ void setup() {
 }
 
 void loop() {
-  float x, y, z, angle;
+  float x, y, z, anglex, angley;
 
   if (IMU.accelerationAvailable()) {
     IMU.readAcceleration(x, y, z);
-    angle = RAD_TO_DEG*atan(y/z);
-    Serial.println(angle);
+    angley = RAD_TO_DEG*atan(y/z);
+    anglex = RAD_TO_DEG*atan(x/z);
+    Serial.print(angley);
+    Serial.print("\t");
+    Serial.println(anglex);
+
   }
 }
 

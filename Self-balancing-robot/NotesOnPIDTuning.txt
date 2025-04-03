@@ -1,0 +1,26 @@
+pwm + 35, setpoint: -0.75, pid: 17.75, 200, 0.01
+- drift back
+- balances when pushed forward
+
+pwm + 25, setpoint: -0.75, pid: 17.75, 200, 0.01
+- drift back
+- balances less
+
+pwm + 35, setpoint: -0.6, pid: 17.75, 200, 0.01
+- slight drift back
+- will balance, drift back, lock into an angle and go unstable 
+- balances well
+
+
+pwm + 35, setpoint: -0.55, pid: 17.75, 200, 0.01
+- slight drift back
+- will balance, drift back, lock into an angle and go unstable 
+- balances well
+
+Cracked Model Coefficients
+kp: 126.6 
+ki: 45.279
+Kd: 82.209
+
+V for balance 
+10.64V

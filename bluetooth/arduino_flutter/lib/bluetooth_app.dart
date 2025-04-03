@@ -1,11 +1,20 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
+//import 'package:flutter_joystick/flutter_joystick.dart';
+
+/*
+Note: used flutter_joystick package from https://pub.dev/packages/flutter_joystick#joystick
+UPDATE MAR 25: NOT USING JOYSTICK
+Also used ChatGPT to reference how to transmit float through BLE
+*/
 
 // define UUIDs as constants - these should match the Arduino code
-const String serviceUUID = "00000000-5EC4-4083-81CD-A10B8D5CF6EC";
-const String characteristicUUID = "00000001-5EC4-4083-81CD-A10B8D5CF6EC";
+const String serviceUUID = "fc096266-ad93-482d-928c-c2560ea93a4e";
+const String characteristicUUID = "9ff0183d-6d83-4d05-a10e-55c142bee2d1";
+const double TARGET_ANGLE_INCREMENT = 0.2;
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -18,6 +27,23 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final _ble = FlutterReactiveBle();
+
+  String turnModeString = 'Balance';
+  double targetAngle = 0;
+  double num1 = 0;
+  double num2 = 0;
+  double num3 = 0;
+  double lastInput1 = 0;
+  double lastInput2 = 0;
+  double lastInput3 = 0;
+
+
+  final TextEditingController myController1 = TextEditingController();
+  final TextEditingController myController2 = TextEditingController();
+  final TextEditingController myController3 = TextEditingController();
+
+  //JoystickMode _joystickMode = JoystickMode.all;
+
 
   StreamSubscription<DiscoveredDevice>?
       _scanSub; // subscribe to bluetooth scanning stream
@@ -39,6 +65,9 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     _scanSub = _ble.scanForDevices(withServices: []).listen(_onScanUpdate);
+    Future.delayed(Duration(seconds: 10), () {
+      _scanSub?.cancel(); // Stop scanning after 10 seconds
+    });
   }
 
   // when terminating cancel all the subscriptions
@@ -47,6 +76,9 @@ class _MyHomePageState extends State<MyHomePage> {
     _notifySub?.cancel();
     _connectSub?.cancel();
     _scanSub?.cancel();
+    myController1.dispose();
+    myController2.dispose();
+    myController3.dispose();
     super.dispose();
   }
 
@@ -75,8 +107,16 @@ class _MyHomePageState extends State<MyHomePage> {
               _isConnected = true;
             });
             _onConnected(_selectedDeviceId!);
-          }
-        },
+          }  else if (update.connectionState == DeviceConnectionState.disconnected) {
+          // Handle unexpected disconnections
+          setState(() {
+            _stateMessage = 'Disconnected from $_selectedDeviceName.';
+            _isConnected = false;
+            _writeCharacteristic = null;
+          });
+
+        }
+      },
         onError: (error) {
           setState(() {
             _stateMessage = 'Connection error: $error';
@@ -127,15 +167,26 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  Future<void> _sendCommand(String command) async {
+  Future<void> _sendCommand(int turnCommand, double p, double i, double d) async {
+    
     if (_writeCharacteristic != null) {
+        final ByteData data = ByteData(13);
+        //data.setFloat32(0, turn, Endian.little); // First 4 bytes: X-coordinate
+        //data.setFloat32(4, forward, Endian.little); // Next 4 bytes: Y-coordinate
+        data.setInt8(0, turnCommand);
+        data.setFloat32(1, p, Endian.little); // Next 4 bytes: p
+        data.setFloat32(5, i, Endian.little); // Next 4 bytes: i
+        data.setFloat32(9, d, Endian.little); // Next 4 bytes: d
+
+        final List<int> sendData = data.buffer.asUint8List();
       try {
         await _ble.writeCharacteristicWithResponse(
+
           _writeCharacteristic!,
-          value: utf8.encode(command),
+          value: sendData,
         );
         setState(() {
-          _stateMessage = "Command '$command' sent!";
+          _stateMessage = "Command sent!";
         });
       } catch (e) {
         setState(() {
@@ -197,54 +248,208 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: _disconnectFromDevice,
               child: const Text('Disconnect'),
             ),
-          // **************** command buttons ****************
+
+          
+          
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                /*
+                Joystick(
+                  mode: _joystickMode,
+                  listener: (details) {
+                    setState(() {
+                      _x = double.parse(details.x.toStringAsFixed(2));
+                      _y = double.parse(details.y.toStringAsFixed(2));
+
+
+                    });
+                    //_sendCommand(_x,_y, num1, num2, num3);
+                  },
+                ),
+                const SizedBox(height: 10),
+                Text('X: $_x'),
+                const SizedBox(height: 10),
+                Text('Y: $_y'),
+                */
+
+                
                 // Joystick Buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                  SizedBox(
+                    width: 70,
+                    height: 70,
+                    child: 
                     ElevatedButton(
-                      onPressed:
-                          _isConnected ? () => _sendCommand('FORWARD') : null,
+                      onPressed: (){
+                          if(_isConnected){
+                              _sendCommand(1, num1, num2, num3);
+                            }
+                          //turnModeString = 'Forward';
+                          targetAngle += TARGET_ANGLE_INCREMENT;
+                      },
                       child: const Icon(Icons.arrow_upward),
                     ),
+                  )
+                    
                   ],
                 ),
                 const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ElevatedButton(
-                      onPressed:
-                          _isConnected ? () => _sendCommand('LEFT') : null,
-                      child: const Icon(Icons.arrow_back),
-                    ),
+                    SizedBox(
+                      width: 70,
+                      height:70,
+                      child: 
+                      ElevatedButton(
+                        onPressed:(){
+                          if(_isConnected){
+                              _sendCommand(2, num1, num2, num3);
+                            }
+                          turnModeString = 'Left';
+                        },
+                            
+                        child: const Icon(Icons.arrow_back),
+                      ),
+                   ),
+                   const SizedBox(width: 10),
+                    SizedBox(
+                      width: 70,
+                      height:70,
+                      child: 
+                      ElevatedButton(
+                        onPressed:(){
+                          if(_isConnected){
+                              _sendCommand(0, num1, num2, num3);
+                            }
+                          turnModeString = 'Balance';
+                        },
+                        child: const Icon(Icons.stop_outlined),
+                      ),
+                   ),
                     const SizedBox(width: 10),
-                    ElevatedButton(
-                      onPressed:
-                          _isConnected ? () => _sendCommand('BACK') : null,
-                      child: const Icon(Icons.arrow_downward),
-                    ),
-                    const SizedBox(width: 10),
-                    ElevatedButton(
-                      onPressed:
-                          _isConnected ? () => _sendCommand('RIGHT') : null,
-                      child: const Icon(Icons.arrow_forward),
-                    ),
+                    SizedBox(
+                      width: 70,
+                      height:70,
+                      child: 
+                      ElevatedButton(
+                        onPressed:(){
+                          if(_isConnected){
+                              _sendCommand(3, num1, num2, num3);
+                            }
+                          turnModeString = 'Right';
+                        },
+                        child: const Icon(Icons.arrow_forward),
+                      ),
+                   ),
                   ],
                 ),
                 const SizedBox(height: 20),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ElevatedButton(
-                      onPressed: _isConnected ? () => _sendCommand('A') : null,
-                      child: const Text('Send A'),
+                    SizedBox(
+                      width: 70,
+                      height: 70,
+                      child: 
+                      ElevatedButton(
+                        onPressed:(){
+                           if(_isConnected){
+                              _sendCommand(4, num1, num2, num3);
+                            }
+                          //turnModeString = 'Back';
+                          targetAngle -= TARGET_ANGLE_INCREMENT;
+                        },
+
+                        child: const Icon(Icons.arrow_downward),
+                      ),
+                   ),
+                  ],
+                ), 
+                const SizedBox(height: 20),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Turn Mode: $turnModeString'),
+                    const SizedBox(height: 5),
+                    
+                  ],
+                ), 
+                
+                
+                //--------------------------------------ADJUSTABLE PID--------------------------------------------------
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    
+                    Text('LAST INPUT: P: $lastInput1, I: $lastInput2, D: $lastInput3'),
+                    const SizedBox(height: 5),
+                    Text('CURRENT INPUT: P: $num1, I: $num2, D: $num3'),
+ 
+                    TextFormField(
+ 
+                      controller: myController1,
+                      keyboardType: TextInputType.number,
+ 
+                     ),
+                     SizedBox(height: 5),
+ 
+                     TextFormField(
+ 
+                       controller: myController2,
+                       keyboardType: TextInputType.number,
+ 
+                     ),
+                     SizedBox(height: 5),
+ 
+                     TextFormField(
+ 
+                       controller: myController3,
+                       keyboardType: TextInputType.number,
+ 
+                     ),
+                     SizedBox(height: 5),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+              
+                        
+                        ElevatedButton(
+                          onPressed: (){
+                            lastInput1 = num1;
+                            lastInput2 = num2;
+                            lastInput3 = num3;
+
+                            num1 = double.tryParse(myController1.text) ?? 0;
+                            num2 = double.tryParse(myController2.text) ?? 0;
+                            num3 = double.tryParse(myController3.text) ?? 0;
+                            if(_isConnected){
+                              _sendCommand(0, num1, num2, num3);
+                            }
+                            
+                          },
+                          child: const Text('Send PID'),
+                        ),
+                        ElevatedButton(
+                          onPressed: (){
+                            
+                            if(_isConnected){
+                              _sendCommand(10, num1, num2, num3); //10 = reset flag, check for flag on arduino, change back to original turn value
+                            }
+                            
+                          },
+                            child: const Text('Reset integral error'),
+                        ),
+                      ]
+                        
                     ),
+                    
+                    
+                    /*
                     const SizedBox(width: 10),
                     ElevatedButton(
                       onPressed: _isConnected ? () => _sendCommand('B') : null,
@@ -255,8 +460,12 @@ class _MyHomePageState extends State<MyHomePage> {
                       onPressed: _isConnected ? () => _sendCommand('C') : null,
                       child: const Text('Send C'),
                     ),
+                    */
                   ],
                 ),
+                //------------------------------------------------------------------------------------------------------------------------------------
+                
+                
               ],
             ),
           ),

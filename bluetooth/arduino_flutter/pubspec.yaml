@@ -36,6 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   #Adding the BLE dependency neccessary for bluetooth functionality
   flutter_reactive_ble: ^5.3.1
+  flutter_joystick: ^0.2.1
 
 dev_dependencies:
   flutter_test:

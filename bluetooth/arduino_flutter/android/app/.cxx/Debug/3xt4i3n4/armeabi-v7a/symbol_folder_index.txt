@@ -1,0 +1,1 @@
+C:\Users\ryang\ELEC391\ELEC391\bluetooth\arduino_flutter\build\app\intermediates\cxx\Debug\3xt4i3n4\obj\armeabi-v7a
