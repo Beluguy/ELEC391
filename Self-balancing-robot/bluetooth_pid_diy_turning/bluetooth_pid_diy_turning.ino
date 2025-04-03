@@ -153,6 +153,8 @@ void loop() {
   //---------------------------------------------------------------------------------
 
   //-----------------direction control---------------------
+  static float turnOffset = 0.0; // (+) -> turn right, (-) -> turn left
+
   if (turn == 1) {
     targetAngle = 0.5;
     Ki = 0.0; Kp = 140.0;
@@ -160,6 +162,7 @@ void loop() {
     targetAngle = -0.5;
     Ki = 0.0; Kp = 140.0;
   } else if (turn == 0 && isConnected) {
+    turnOffset = 0.0;
     Kp = 110.0; Ki = 1300; Kd = 1.6;
     targetAngle *= 0.99;
     //if (lastTurn == 1) targetAngle = -3.0;
@@ -249,12 +252,28 @@ void loop() {
   speed = abs(currPWM) / 1000.0;
   // Serial.println(speed,5);
 
-  if (currentAngle > targetAngle && currentAngle < 16.0) {
+  if(speed - turnOffset < 0.0){
+    speed = 0;
+  } else if (speed + turnOffset > 1.0){
+    speed = 1.0;
+  }
+
+  if (currentAngle > targetAngle && currentAngle < 16.0  && turn == 2) {
+    M1FPin.write(1.0 - speed);
+    M1BPin.write(1.0);
+    M2FPin.write(1.0);
+    M2BPin.write(1.0 - speed);
+  } else if (currentAngle < targetAngle && currentAngle > -16.0 && turn == 3) {
+    M1FPin.write(1.0);
+    M1BPin.write(1.0- speed);
+    M2FPin.write(1.0- speed);
+    M2BPin.write(1.0 );
+  } else if (currentAngle > targetAngle && currentAngle < 16.0){
     M1FPin.write(1.0);
     M1BPin.write(1.0 - speed);
     M2FPin.write(1.0);
     M2BPin.write(1.0 - speed);
-  } else if (currentAngle < targetAngle && currentAngle > -16.0) {
+  } else if (currentAngle < targetAngle && currentAngle > -16.0){
     M1FPin.write(1.0 - speed);
     M1BPin.write(1.0);
     M2FPin.write(1.0 - speed);
