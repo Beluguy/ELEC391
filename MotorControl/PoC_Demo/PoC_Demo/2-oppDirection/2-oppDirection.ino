@@ -2,12 +2,14 @@
 #define M1F D7 //BIN1 - GREEN
 #define M1B D8 //BIN2 - BLUE
 //MOTOR 2
+
 #define M2F D10 //AIN1 - BLUE
 #define M2B D9 //AIN2 - GREEN
 
 
 void setup() {
 //Motor 1 Setup
+
 pinMode(M1F, OUTPUT);
 pinMode(M1B, OUTPUT);
 
