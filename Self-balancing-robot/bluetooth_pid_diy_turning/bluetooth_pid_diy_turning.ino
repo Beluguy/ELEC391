@@ -127,7 +127,7 @@ void loop() {
         // Serial.println(central.address());
         digitalWrite(LED_BUILTIN, HIGH);  // Turn on LED to indicate connection
         isConnected = true;
-        //Kp = 110.0; Ki = 1200; Kd = 1.9;
+        Kp = 110.0; Ki = 1200; Kd = 1.9;
       }
       if (customCharacteristic.written()) {
         length = customCharacteristic.valueLength();
@@ -139,33 +139,33 @@ void loop() {
           memcpy(&Kp, data + 1, 4);  // Extract third float
           memcpy(&Ki, data + 5, 4);  // Extract fourth float
           memcpy(&Kd, data + 9, 4);  // Extract fifth float
-
-          if (turn == 1) {
-            targetAngle = 0.5;
-            Ki = 0.0; Kp = 120.0;
-          } else if (turn == 4) {
-            targetAngle = -0.5;
-            Ki = 0.0; Kp = 120.0;
-          } else if (turn == 0) {
-            Kp = 110.0; //Ki = 1200;
-            if (lastTurn == 1) targetAngle = -2.0;
-            else if (lastTurn == 4) targetAngle = 2.0;
-            else targetAngle = 0.0;
-          } 
         }
       }
     } else {
       if (isConnected) {
         isConnected = false;
-        Kp = 0.0;
-        Ki = 0.0;
-        Kd = 0.0;
+        Kp = 0.0; Ki = 0.0; Kd = 0.0;
         speed = 0.0;
         digitalWrite(LED_BUILTIN, LOW);  // Turn off LED when disconnected
       }
     }
   }
   //---------------------------------------------------------------------------------
+
+  //-----------------direction control---------------------
+  if (turn == 1) {
+    targetAngle = 0.3;
+    Ki = 0.0; Kp = 120.0;
+  } else if (turn == 4) {
+    targetAngle = -0.3;
+    Ki = 0.0; Kp = 120.0;
+  } else if (turn == 0) {
+    Kp = 110.0; Ki = 1200;
+    if (lastTurn == 1) targetAngle = -3.0;
+    else if (lastTurn == 4) targetAngle = 3.0;
+    else targetAngle = 0.0;
+  } 
+  //-------------------------------------------------------
 
   //---------------------KALMAN FILTER----------------------------------------------------
   if (IMU.readAcceleration(accX, accY, accZ) && IMU.readGyroscope(gyroX, gyroY, gyroZ)) {
@@ -188,7 +188,11 @@ void loop() {
     kalmanUncertainty = (1.0 - kalGain) * kalmanUncertainty;  // Calculate new uncertainty
 
     // Serial.print("turn:");
+    // Serial.print(lastTurn);
+    // Serial.print("\t");
     // Serial.print(turn);
+    // Serial.print("\t");
+    // Serial.println(targetAngle);
     // Serial.print("\tKp: ");
     // Serial.print(Kp);
     // Serial.print("\tKi: ");
