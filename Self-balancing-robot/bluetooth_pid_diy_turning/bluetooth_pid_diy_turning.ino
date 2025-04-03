@@ -33,7 +33,7 @@ mbed::PwmOut M2FPin(digitalPinToPinName(M2F));
 //----------------------------------------------------------------PID-------------------------------------------------------------------
 float Kp = 0.0, Ki = 0.0, Kd = 0.0, remainingMax, remainingMin;
 float pOut = 0.0, iOut = 0.0, dOut = 0.0;
-float currentAngle = 0.0, targetAngle = 0.0, currPWM = 0.0, lastPWM = 0.0, currError = 0.0, lastError = 0.0, dt, speed;
+float currentAngle = 0.0, targetAngle = 0.0, lastAngle = 0.0, currPWM = 0.0, lastPWM = 0.0, currError = 0.0, lastError = 0.0, dt, speed;
 //--------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------Kalman Filter-----------------------------------
@@ -43,7 +43,7 @@ float kalmanUncertainty = ACC_STD_SQUARED, kalGain;
 //------------------------------------------------------------------------------
 
 //-----------------------------direction & turning -----------------------------------
-int length, lastTurn = 0, turn = 0;  // 0 = balance, 1 = forward, 2 = left, 3 = right, 4 = backward
+int lastTurn = 0, turn = 0;  // 0 = balance, 1 = forward, 2 = left, 3 = right, 4 = backward
 //------------------------------------------------------------------------------------
 
 //--------------------------------------BLE-----------------------------------------
@@ -52,6 +52,7 @@ BLEService customService("fc096266-ad93-482d-928c-c2560ea93a4e");
 BLECharacteristic customCharacteristic("9ff0183d-6d83-4d05-a10e-55c142bee2d1", BLERead | BLEWrite | BLENotify, BUFFER_SIZE, false);
 unsigned long lastBLECheck = 0, currentMillis;
 bool isConnected = false;
+int length;
 //----------------------------------------------------------------------------------
 
 //-----------------------Finding loop time---------------------------
@@ -139,18 +140,18 @@ void loop() {
           memcpy(&Ki, data + 5, 4);  // Extract fourth float
           memcpy(&Kd, data + 9, 4);  // Extract fifth float
 
-          // if (turn == 1) {
-          //   targetAngle = 0.5;
-          //   Ki = 0.0; Kp = 120.0;
-          // } else if (turn == 4) {
-          //   targetAngle = -0.5;
-          //   Ki = 0.0; Kp = 120.0;
-          // } else if (turn == 0) {
-          //   //Kp = 110.0; Ki = 1200;
-          //   if (lastTurn == 1) targetAngle = -5.0;
-          //   else if (lastTurn == 4) targetAngle= 5.0;
-          //   else targetAngle = 0.0;
-          // } 
+          if (turn == 1) {
+            targetAngle = 0.5;
+            Ki = 0.0; Kp = 120.0;
+          } else if (turn == 4) {
+            targetAngle = -0.5;
+            Ki = 0.0; Kp = 120.0;
+          } else if (turn == 0) {
+            Kp = 110.0; Ki = 1200;
+            if (lastTurn == 1) targetAngle = -5.0;
+            else if (lastTurn == 4) targetAngle= 5.0;
+            else targetAngle = 0.0;
+          } 
         }
       }
     } else {
@@ -213,18 +214,19 @@ void loop() {
   currError = targetAngle - currentAngle;
 
   pOut = Kp * currError;
-  dOut = -Kd * (currError - lastError) / dt;
+  dOut = -Kd * (currentAngle - lastAngle) / dt;
   if (Ki != 0.0) { // to ensure iOut = 0 when Ki is 0 
     iOut += (Ki * dt) * (currError + lastError) / 2.0;
     remainingMax = 1000.0 - (pOut + dOut);
     remainingMin = -1000.0 - (pOut + dOut);
     iOut = constrain(iOut, remainingMin, remainingMax);
-  } else iOut = 0.0; // Explicitly zero out the integral term
+  } else iOut = 0.0;
 
   currPWM = constrain(pOut + dOut + iOut, -1000.0, 1000.0);
 
+  // Serial.print("\tremainingMax: ");
   // Serial.print(remainingMax,5);
-  // Serial.print("\t");
+  // Serial.print("\tremainingMin: ");
   // Serial.print(remainingMin,5);
   // Serial.print("\tCurrPWM: ");
   // Serial.print(currPWM,5);
@@ -233,6 +235,7 @@ void loop() {
   // Serial.print("\tiOut: ");
   // Serial.println(iOut,5);
 
+  lastAngle = currentAngle;
   lastError = currError;
   //---------------------------------------------------------
 
@@ -263,11 +266,9 @@ void loop() {
   // totalLoopTime += elapsed;
   // loopCount++;
 
-  // // Update min/max
   // if (elapsed > maxLoopTime) maxLoopTime = elapsed;
   // if (elapsed < minLoopTime) minLoopTime = elapsed;
 
-  // // Print stats
   // if (loopCount >= PRINT_INTERVAL) {
   //   float avg = (totalLoopTime / 1000.0) / loopCount;
   //   Serial.print(avg);
@@ -276,7 +277,6 @@ void loop() {
   //   Serial.print("\t");
   //   Serial.println(maxLoopTime / 1000.0);
 
-  //   // Reset
   //   totalLoopTime = 0;
   //   loopCount = 0;
   //   maxLoopTime = 0;
