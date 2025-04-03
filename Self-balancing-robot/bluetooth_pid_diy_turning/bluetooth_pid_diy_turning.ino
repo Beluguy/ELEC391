@@ -147,9 +147,9 @@ void loop() {
             targetAngle = -0.5;
             Ki = 0.0; Kp = 120.0;
           } else if (turn == 0) {
-            Kp = 110.0; Ki = 1200;
-            if (lastTurn == 1) targetAngle = -5.0;
-            else if (lastTurn == 4) targetAngle= 5.0;
+            Kp = 110.0; //Ki = 1200;
+            if (lastTurn == 1) targetAngle = -2.0;
+            else if (lastTurn == 4) targetAngle = 2.0;
             else targetAngle = 0.0;
           } 
         }
@@ -206,7 +206,7 @@ void loop() {
     // Serial.print("\t");
     // Serial.print(accAngle);
     // Serial.print("\tCurrentAngle: ");
-    Serial.println(currentAngle);
+    // Serial.println(currentAngle);
   }
   //--------------------------------------------------------------------------------------
 
