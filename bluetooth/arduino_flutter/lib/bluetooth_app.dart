@@ -273,8 +273,18 @@ class _MyHomePageState extends State<MyHomePage> {
                 const SizedBox(height: 10),
                 Text('Y: $_y'),
                 */
-
-                
+                Align(
+                  alignment: Alignment.topRight,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if(_isConnected){
+                        _sendCommand(5, num1, num2, num3);
+                        turnModeString = 'Back';
+                      }
+                    },
+                    child: Text("back -> Adjust"),
+                  ),
+                ),
                 // Joystick Buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -294,9 +304,9 @@ class _MyHomePageState extends State<MyHomePage> {
                       },
                       child: const Icon(Icons.arrow_upward),
                     ),
-                  )
-                    
+                  ),
                   ],
+
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -371,15 +381,29 @@ class _MyHomePageState extends State<MyHomePage> {
 
                         child: const Icon(Icons.arrow_downward),
                       ),
-                   ),
+                   )
                   ],
                 ), 
+                
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if(_isConnected){
+                        _sendCommand(6, num1, num2, num3);
+                        turnModeString = 'Back';
+                      }
+                    },
+                    child: Text("FWD -> Adjust"),
+                  ),
+                ),
+                
+
                 const SizedBox(height: 20),
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text('Turn Mode: $turnModeString'),
-                    const SizedBox(height: 5),
                     
                   ],
                 ), 
@@ -389,10 +413,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    
-                    Text('LAST INPUT: P: $lastInput1, I: $lastInput2, D: $lastInput3'),
-                    const SizedBox(height: 5),
-                    Text('CURRENT INPUT: P: $num1, I: $num2, D: $num3'),
  
                     TextFormField(
  
