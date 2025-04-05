@@ -4,17 +4,29 @@
 
 // BLE constants
 #define BUFFER_SIZE 13
-#define BLE_CHECK_INTERVAL 50
+#define BLE_CHECK_INTERVAL 100
 
-// IMU Calibration constants
-#define gyroXCal -0.65
-#define accXCal 0.02
-#define accYCal -0.01
-#define accZCal 0.011
+//IMU Calibration constants for 1600 Hz, +- 2G, bwp = normal for both
+#define gyroXCal -0.5
+#define accXCal 0.03
+#define accYCal -0.009
+#define accZCal 0.02
+
+// // IMU Calibration constants for 1600 Hz, +- 2G
+// #define gyroXCal -0.54
+// #define accXCal 0.028
+// #define accYCal -0.0085
+// #define accZCal 0.022
+
+// // IMU Calibration constants for 1600 Hz, +- 4G
+// #define gyroXCal -0.65
+// #define accXCal 0.02
+// #define accYCal -0.01
+// #define accZCal 0.011
 
 // Kalman Filter constants
-#define ACC_STD 0.25
-#define GYRO_STD 0.174
+#define ACC_STD 2
+#define GYRO_STD 1.5
 #define GYRO_STD_SQUARED GYRO_STD * GYRO_STD
 #define ACC_STD_SQUARED ACC_STD * ACC_STD
 
@@ -30,11 +42,18 @@ mbed::PwmOut M2FPin(digitalPinToPinName(M2F));
 #define PWM_FREQ 10000.0
 #define PWM_PERIOD 1.0 / PWM_FREQ
 
-//----------------------------------------------------------------PID-------------------------------------------------------------------
-float Kp = 0.0, Ki = 0.0, Kd = 0.0, remainingMax, remainingMin, bias;
+//-------------------------------------------------------PID for balancing----------------------------------------------------------
+float Kp = 0.0, Ki = 0.0, Kd = 0.0, remainingMax, remainingMin;
 float pOut = 0.0, iOut = 0.0, dOut = 0.0;
 float currentAngle = 0.0, targetAngle = 0.0, lastAngle = 0.0, currPWM = 0.0, lastPWM = 0.0, currError = 0.0, lastError = 0.0, dt, speed;
 //--------------------------------------------------------------------------------------------------------------------------------------
+
+// //--------------------------------------------------------------------------
+// float yawTarget = 0.0, yawError = 0.0, lastYawError = 0.0;
+// float yawP = 0.0, yawI = 0.0, yawD = 0.0;
+// float Kp_yaw = , Ki_yaw = 0.5, Kd_yaw = 0.1; 
+// float yawOutput = 0.0;
+// //-----------------------------------------------------------------------------
 
 //------------------------------Kalman Filter-----------------------------------
 float accX = 0.0, accY = 0.0, accZ = 0.0, gyroX = 0.0, gyroY = 0.0, gyroZ = 0.0;
@@ -94,7 +113,7 @@ void setup() {
   // Serial.println("Bluetooth® device active, waiting for connections...");
   //----------------------------------------------------------------------
 
-  //Set up gyroscope
+  //Set up IMU
   if (!IMU.begin()) {
     //Serial.println("Failed to initialize IMU!");
     while (1);
@@ -111,7 +130,7 @@ void setup() {
 }
 
 void loop() {
-  // unsigned long start = micros();
+  //unsigned long start = micros();
   currentMillis = millis();
   // ---------------- BLE Handling ---------------------------------------------
   if (currentMillis - lastBLECheck >= BLE_CHECK_INTERVAL) {
@@ -127,7 +146,6 @@ void loop() {
         // Serial.println(central.address());
         digitalWrite(LED_BUILTIN, HIGH);  // Turn on LED to indicate connection
         isConnected = true;
-        Kp = 110.0; Ki = 1300; Kd = 1.6;
       }
       if (customCharacteristic.written()) {
         length = customCharacteristic.valueLength();
@@ -139,6 +157,10 @@ void loop() {
           memcpy(&Kp, data + 1, 4);  // Extract third float
           memcpy(&Ki, data + 5, 4);  // Extract fourth float
           memcpy(&Kd, data + 9, 4);  // Extract fifth float
+
+          Kp = 150.0; Ki = 1400; Kd = 2.0;
+          if (turn == 5) targetAngle += 1.0;
+          else if (turn == 6) targetAngle -= 1.0;
         }
       }
     } else {
@@ -153,22 +175,9 @@ void loop() {
   //---------------------------------------------------------------------------------
 
   //-----------------direction control---------------------
-  static float turnOffset = 0.0; // (+) -> turn right, (-) -> turn left
-
-  if (turn == 1) {
-    targetAngle = 0.5;
-    Ki = 0.0; Kp = 140.0;
-  } else if (turn == 4) {
-    targetAngle = -0.5;
-    Ki = 0.0; Kp = 140.0;
-  } else if (turn == 0 && isConnected) {
-    turnOffset = 0.0;
-    Kp = 110.0; Ki = 1300; Kd = 1.6;
-    targetAngle *= 0.99;
-    //if (lastTurn == 1) targetAngle = -3.0;
-    //else if (lastTurn == 4) targetAngle = 3.0;
-    //else targetAngle = 0.0;
-  } 
+  if (turn == 1) targetAngle = 0.5;
+  else if (turn == 4) targetAngle = -0.5;
+  else if (turn == 0 && isConnected) targetAngle = 0.0;
   //-------------------------------------------------------
 
   //---------------------KALMAN FILTER----------------------------------------------------
@@ -214,7 +223,7 @@ void loop() {
     // Serial.print("\t");
     // Serial.print(accAngle);
     // Serial.print("\tCurrentAngle: ");
-    // Serial.println(currentAngle);
+    // Serial.print(currentAngle);
   }
   //--------------------------------------------------------------------------------------
 
@@ -223,6 +232,7 @@ void loop() {
 
   pOut = Kp * currError;
   dOut = -Kd * (currentAngle - lastAngle) / dt;
+
   if (Ki != 0.0) { // to ensure iOut = 0 when Ki is 0 
     iOut += (Ki * dt) * (currError + lastError) / 2.0;
     remainingMax = 1000.0 - (pOut + dOut);
@@ -238,8 +248,8 @@ void loop() {
   // Serial.print(remainingMin,5);
   // Serial.print("\tCurrPWM: ");
   // Serial.print(currPWM,5);
-  // Serial.print("\tdOut: ");
-  // Serial.print(dOut,5);
+  // Serial.print("\tcurrdOut: ");
+  // Serial.print(currdOut,5);
   // Serial.print("\tiOut: ");
   // Serial.println(iOut,5);
 
@@ -248,36 +258,44 @@ void loop() {
   //---------------------------------------------------------
 
   //-----------------------motor control-----------------------
-  //speed = constrain(abs(currPWM) / 1000.0, 0.05, 1.0);
   speed = abs(currPWM) / 1000.0;
+  // Serial.print("\tspeed: ");
   // Serial.println(speed,5);
 
-  if(speed - turnOffset < 0.0){
-    speed = 0;
-  } else if (speed + turnOffset > 1.0){
-    speed = 1.0;
-  }
-
-  if (currentAngle > targetAngle && currentAngle < 16.0  && turn == 2) {
-    M1FPin.write(1.0 - speed);
-    M1BPin.write(1.0);
-    M2FPin.write(1.0);
-    M2BPin.write(1.0 - speed);
-  } else if (currentAngle < targetAngle && currentAngle > -16.0 && turn == 3) {
-    M1FPin.write(1.0);
-    M1BPin.write(1.0- speed);
-    M2FPin.write(1.0- speed);
-    M2BPin.write(1.0 );
-  } else if (currentAngle > targetAngle && currentAngle < 16.0){
-    M1FPin.write(1.0);
-    M1BPin.write(1.0 - speed);
-    M2FPin.write(1.0);
-    M2BPin.write(1.0 - speed);
-  } else if (currentAngle < targetAngle && currentAngle > -16.0){
-    M1FPin.write(1.0 - speed);
-    M1BPin.write(1.0);
-    M2FPin.write(1.0 - speed);
-    M2BPin.write(1.0);
+  if (currPWM < 0.0 && currentAngle < 16.0) { // forward
+     if(turn == 2){
+      M1FPin.write(1.0);
+      M1BPin.write(1.0);
+      M2FPin.write(1.0);
+      M2BPin.write(1.0 - speed);
+    } else if (turn == 3){
+      M1FPin.write(1.0 );
+      M1BPin.write(1.0 - speed);
+      M2FPin.write(1.0);
+      M2BPin.write(1.0);
+    } else {
+      M1FPin.write(1.0);
+      M1BPin.write(1.0 - speed);
+      M2FPin.write(1.0);
+      M2BPin.write(1.0 - speed);
+    }
+  } else if (currPWM > 0.0 && currentAngle > -16.0) { // backward
+     if(turn == 2){
+      M1FPin.write(1.0);
+      M1BPin.write(1.0 );
+      M2FPin.write(1.0 - speed);
+      M2BPin.write(1.0 );
+    } else if (turn == 3){
+      M1FPin.write(1.0 - speed);
+      M1BPin.write(1.0 );
+      M2FPin.write(1.0);
+      M2BPin.write(1.0);
+    } else {
+      M1FPin.write(1.0 - speed);
+      M1BPin.write(1.0);
+      M2FPin.write(1.0 - speed);
+      M2BPin.write(1.0);
+    }
   } else {
     M1FPin.write(1.0);
     M1BPin.write(1.0);
