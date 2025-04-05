@@ -281,14 +281,14 @@ void loop() {
     }
   } else if (currPWM > 0.0 && currentAngle > -16.0) { // backward
      if(turn == 2){
+      M1FPin.write(1.0 - speed);
+      M1BPin.write(1.0);
+      M2FPin.write(1.0);
+      M2BPin.write(1.0 );
+    } else if (turn == 3){
       M1FPin.write(1.0);
       M1BPin.write(1.0 );
       M2FPin.write(1.0 - speed);
-      M2BPin.write(1.0 );
-    } else if (turn == 3){
-      M1FPin.write(1.0 - speed);
-      M1BPin.write(1.0 );
-      M2FPin.write(1.0);
       M2BPin.write(1.0);
     } else {
       M1FPin.write(1.0 - speed);
