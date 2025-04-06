@@ -42,6 +42,9 @@ mbed::PwmOut M2FPin(digitalPinToPinName(M2F));
 #define PWM_FREQ 10000.0
 #define PWM_PERIOD 1.0 / PWM_FREQ
 
+//Camera Vision Related Definitions
+#define CAM_CONTROL D12 
+
 //-------------------------------------------------------PID for balancing----------------------------------------------------------
 float Kp = 0.0, Ki = 0.0, Kd = 0.0, remainingMax, remainingMin;
 float pOut = 0.0, iOut = 0.0, dOut = 0.0;
@@ -120,11 +123,20 @@ void setup() {
   M1FPin.period(PWM_PERIOD);
   M1BPin.period(PWM_PERIOD);
   M2FPin.period(PWM_PERIOD);
+
+  //Camera Vision Related Inits
+  pinMode(CAM_CONTROL, INPUT);
 }
 
 void loop() {
   //unsigned long start = micros();
   currentMillis = millis();
+
+   //-----------------------------------------CAMERA VISION-------------------------------------
+   turn = (integer) CAM_CONTROL
+   //---------------------------------------------------------------------------------
+
+
   // ---------------- BLE Handling ---------------------------------------------
   if (currentMillis - lastBLECheck >= BLE_CHECK_INTERVAL) {
     lastBLECheck = currentMillis;
@@ -155,7 +167,7 @@ void loop() {
           if (turn == 5) targetAngle += 1.0;
           else if (turn == 6) targetAngle -= 1.0;
         }
-      }
+      } 
     } else {
       if (isConnected) {
         isConnected = false;
@@ -167,6 +179,7 @@ void loop() {
   }
   //---------------------------------------------------------------------------------
 
+ 
   //-----------------direction control---------------------
   if (turn == 1) targetAngle = 0.6;
   else if (turn == 4) targetAngle = -0.6;
