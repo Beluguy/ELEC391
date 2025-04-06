@@ -48,13 +48,6 @@ float pOut = 0.0, iOut = 0.0, dOut = 0.0;
 float currentAngle = 0.0, targetAngle = 0.0, lastAngle = 0.0, currPWM = 0.0, lastPWM = 0.0, currError = 0.0, lastError = 0.0, dt, speed;
 //--------------------------------------------------------------------------------------------------------------------------------------
 
-// //--------------------------------------------------------------------------
-// float yawTarget = 0.0, yawError = 0.0, lastYawError = 0.0;
-// float yawP = 0.0, yawI = 0.0, yawD = 0.0;
-// float Kp_yaw = , Ki_yaw = 0.5, Kd_yaw = 0.1; 
-// float yawOutput = 0.0;
-// //-----------------------------------------------------------------------------
-
 //------------------------------Kalman Filter-----------------------------------
 float accX = 0.0, accY = 0.0, accZ = 0.0, gyroX = 0.0, gyroY = 0.0, gyroZ = 0.0;
 double accAngle, gyroAngle;
@@ -158,7 +151,7 @@ void loop() {
           memcpy(&Ki, data + 5, 4);  // Extract fourth float
           memcpy(&Kd, data + 9, 4);  // Extract fifth float
 
-          Kp = 150.0; Ki = 1400; Kd = 2.0;
+          //Kp = 160.0; Ki = 1500; Kd = 2.0;
           if (turn == 5) targetAngle += 1.0;
           else if (turn == 6) targetAngle -= 1.0;
         }
@@ -175,8 +168,8 @@ void loop() {
   //---------------------------------------------------------------------------------
 
   //-----------------direction control---------------------
-  if (turn == 1) targetAngle = 0.5;
-  else if (turn == 4) targetAngle = -0.5;
+  if (turn == 1) targetAngle = 0.6;
+  else if (turn == 4) targetAngle = -0.6;
   else if (turn == 0 && isConnected) targetAngle = 0.0;
   //-------------------------------------------------------
 
