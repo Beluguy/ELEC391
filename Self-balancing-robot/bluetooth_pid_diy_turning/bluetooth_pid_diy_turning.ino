@@ -67,6 +67,7 @@ BLEService customService("fc096266-ad93-482d-928c-c2560ea93a4e");
 BLECharacteristic customCharacteristic("9ff0183d-6d83-4d05-a10e-55c142bee2d1", BLERead | BLEWrite | BLENotify, BUFFER_SIZE, false);
 unsigned long lastBLECheck = 0, currentMillis;
 bool isConnected = false;
+int camLastSignal;
 int length;
 //----------------------------------------------------------------------------------
 
@@ -133,7 +134,14 @@ void loop() {
   currentMillis = millis();
 
    //-----------------------------------------CAMERA VISION-------------------------------------
-   turn = (int) CAM_CONTROL;
+   int camSignal = digitalRead(CAM_CONTROL);
+   if(camSignal == HIGH && camLastSignal == LOW){
+    turn = 3;
+   } else if(camSignal == LOW && camLastSignal == HIGH){
+    turn = 0;
+   }
+   //Serial.println(turn);
+   camLastSignal = camSignal;
    //---------------------------------------------------------------------------------
 
 

@@ -14,7 +14,7 @@ Also used ChatGPT to reference how to transmit float through BLE
 // define UUIDs as constants - these should match the Arduino code
 const String serviceUUID = "fc096266-ad93-482d-928c-c2560ea93a4e";
 const String characteristicUUID = "9ff0183d-6d83-4d05-a10e-55c142bee2d1";
-const double TARGET_ANGLE_INCREMENT = 0.2;
+const double TARGET_ANGLE_INCREMENT = 1.0;
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -279,10 +279,11 @@ class _MyHomePageState extends State<MyHomePage> {
                     onPressed: () {
                       if(_isConnected){
                         _sendCommand(5, num1, num2, num3);
-                        turnModeString = 'Back';
+                        turnModeString = 'Increment Target Angle';
+                        targetAngle += 1.0;
                       }
                     },
-                    child: Text("back -> Adjust"),
+                    child: Text("TARGET ANGLE +1"),
                   ),
                 ),
                 // Joystick Buttons
@@ -298,6 +299,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           if(_isConnected){
                               _sendCommand(1, num1, num2, num3);
                               turnModeString = 'Forward';
+                              targetAngle = 0.5;
                             }
                           
                           //targetAngle += TARGET_ANGLE_INCREMENT;
@@ -321,6 +323,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           if(_isConnected){
                               _sendCommand(2, num1, num2, num3);
                               turnModeString = 'Left';
+                              //targetAngle = 0.0;
                             }
                         },
                             
@@ -337,6 +340,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           if(_isConnected){
                               _sendCommand(0, num1, num2, num3);
                               turnModeString = 'Balance';
+                              targetAngle = 0.0;
                             }
                           
                         },
@@ -353,6 +357,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           if(_isConnected){
                               _sendCommand(3, num1, num2, num3);
                               turnModeString = 'Right';
+                              //targetAngle = 0.0;
                             }
                           
                         },
@@ -374,6 +379,7 @@ class _MyHomePageState extends State<MyHomePage> {
                            if(_isConnected){
                               _sendCommand(4, num1, num2, num3);
                               turnModeString = 'Back';
+                              targetAngle = -0.5;
                             }
                           //turnModeString = 'Back';
                           //targetAngle -= TARGET_ANGLE_INCREMENT;
@@ -391,10 +397,11 @@ class _MyHomePageState extends State<MyHomePage> {
                     onPressed: () {
                       if(_isConnected){
                         _sendCommand(6, num1, num2, num3);
-                        turnModeString = 'Back';
+                        turnModeString = 'Decrement Target Angle';
+                        targetAngle -= 1.0;
                       }
                     },
-                    child: Text("FWD -> Adjust"),
+                    child: Text("TARGET ANGLE -1"),
                   ),
                 ),
                 
@@ -403,7 +410,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('Turn Mode: $turnModeString'),
+                    Text('Turn Mode: $turnModeString, Target Angle: $targetAngle'),
                     
                   ],
                 ), 
