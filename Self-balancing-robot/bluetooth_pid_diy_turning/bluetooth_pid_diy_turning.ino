@@ -134,14 +134,14 @@ void loop() {
   currentMillis = millis();
 
    //-----------------------------------------CAMERA VISION-------------------------------------
-   int camSignal = digitalRead(CAM_CONTROL);
-   if(camSignal == HIGH && camLastSignal == LOW){
-    turn = 3;
-   } else if(camSignal == LOW && camLastSignal == HIGH){
-    turn = 0;
-   }
-   //Serial.println(turn);
-   camLastSignal = camSignal;
+  //  int camSignal = digitalRead(CAM_CONTROL);
+  //  if(camSignal == HIGH && camLastSignal == LOW){
+  //   turn = 3;
+  //  } else if(camSignal == LOW && camLastSignal == HIGH){
+  //   turn = 0;
+  //  }
+  //  //Serial.println(turn);
+  //  camLastSignal = camSignal;
    //---------------------------------------------------------------------------------
 
 
@@ -186,10 +186,10 @@ void loop() {
     }
   }
   //---------------------------------------------------------------------------------
-
  
   //-----------------direction control---------------------
   if (turn == 1) targetAngle = 0.6;
+  else if (turn == 2 || turn == 3) targetAngle = 0.3;
   else if (turn == 4) targetAngle = -0.6;
   else if (turn == 0 && isConnected) targetAngle = 0.0;
   //-------------------------------------------------------
@@ -217,7 +217,7 @@ void loop() {
     // Serial.print("turn:");
     // Serial.print(lastTurn);
     // Serial.print("\t");
-    // Serial.print(turn);
+    // Serial.println(turn);
     // Serial.print("\t");
     // Serial.println(targetAngle);
     // Serial.print("\tKp: ");
