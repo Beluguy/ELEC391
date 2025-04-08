@@ -134,16 +134,15 @@ void loop() {
   currentMillis = millis();
 
    //-----------------------------------------CAMERA VISION-------------------------------------
-  //  int camSignal = digitalRead(CAM_CONTROL);
-  //  if(camSignal == HIGH && camLastSignal == LOW){
-  //   turn = 3;
-  //  } else if(camSignal == LOW && camLastSignal == HIGH){
-  //   turn = 0;
-  //  }
-  //  //Serial.println(turn);
-  //  camLastSignal = camSignal;
+   int camSignal = digitalRead(CAM_CONTROL);
+   if(camSignal == HIGH && camLastSignal == LOW){
+    turn = 3;
+   } else if(camSignal == LOW && camLastSignal == HIGH){
+    turn = 0;
+   }
+   //Serial.println(turn);
+   camLastSignal = camSignal;
    //---------------------------------------------------------------------------------
-
 
   // ---------------- BLE Handling ---------------------------------------------
   if (currentMillis - lastBLECheck >= BLE_CHECK_INTERVAL) {
