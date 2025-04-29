@@ -170,7 +170,7 @@ void loop() {
           memcpy(&Ki, data + 5, 4);  // Extract fourth float
           memcpy(&Kd, data + 9, 4);  // Extract fifth float
 
-          //Kp = 160.0; Ki = 1500; Kd = 2.0;
+          //Kp = 140.0; Ki = 1500; Kd = 1.75;
           if (turn == 5) targetAngle += 1.0;
           else if (turn == 6) targetAngle -= 1.0;
         }
